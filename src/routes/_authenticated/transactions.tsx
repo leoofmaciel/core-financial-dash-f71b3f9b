@@ -12,9 +12,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Plus, Pencil, Trash2, Search } from "lucide-react";
+import { Plus, Pencil, Trash2, Search, Paperclip, Upload, X } from "lucide-react";
 import { toast } from "sonner";
 import { formatBRL, formatDate } from "@/lib/format";
+import { logActivity } from "@/lib/logs";
 
 export const Route = createFileRoute("/_authenticated/transactions")({ component: TransactionsPage });
 
@@ -22,13 +23,15 @@ type Tx = {
   id: string; code: number; type: "entrada" | "saida"; name: string; category_id: string | null;
   description: string | null; amount: number; payment_method: string | null;
   status: "pago" | "pendente" | "atrasado"; transaction_date: string; due_date: string | null;
-  notes: string | null; categories?: { name: string; color: string } | null;
+  notes: string | null; attachment_url: string | null;
+  categories?: { name: string; color: string } | null;
 };
 
 const emptyForm = {
   type: "entrada" as "entrada" | "saida", name: "", category_id: "", description: "", amount: "",
   payment_method: "", status: "pago" as "pago" | "pendente" | "atrasado",
   transaction_date: new Date().toISOString().slice(0, 10), due_date: "", notes: "",
+  attachment_url: "" as string,
 };
 
 function TransactionsPage() {
@@ -39,6 +42,7 @@ function TransactionsPage() {
   const [search, setSearch] = useState("");
   const [filterType, setFilterType] = useState<string>("all");
   const [filterStatus, setFilterStatus] = useState<string>("all");
+  const [uploading, setUploading] = useState(false);
 
   const { data: txs = [], isLoading } = useQuery({
     queryKey: ["transactions"],
@@ -67,8 +71,34 @@ function TransactionsPage() {
       type: t.type, name: t.name, category_id: t.category_id ?? "", description: t.description ?? "",
       amount: String(t.amount), payment_method: t.payment_method ?? "", status: t.status,
       transaction_date: t.transaction_date, due_date: t.due_date ?? "", notes: t.notes ?? "",
+      attachment_url: t.attachment_url ?? "",
     });
     setOpen(true);
+  };
+
+  const handleUpload = async (file: File) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    setUploading(true);
+    const ext = file.name.split(".").pop();
+    const path = `${user.id}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+    const { error } = await supabase.storage.from("attachments").upload(path, file);
+    setUploading(false);
+    if (error) return toast.error("Erro no upload: " + error.message);
+    setForm((f) => ({ ...f, attachment_url: path }));
+    toast.success("Comprovante anexado");
+  };
+
+  const removeAttachment = async () => {
+    if (!form.attachment_url) return;
+    await supabase.storage.from("attachments").remove([form.attachment_url]);
+    setForm((f) => ({ ...f, attachment_url: "" }));
+  };
+
+  const downloadAttachment = async (path: string) => {
+    const { data, error } = await supabase.storage.from("attachments").createSignedUrl(path, 60);
+    if (error || !data) return toast.error("Erro ao gerar link");
+    window.open(data.signedUrl, "_blank");
   };
 
   const save = async () => {
@@ -80,20 +110,24 @@ function TransactionsPage() {
       amount: Number(form.amount), payment_method: form.payment_method || null,
       status: form.status, transaction_date: form.transaction_date,
       due_date: form.due_date || null, notes: form.notes || null,
+      attachment_url: form.attachment_url || null,
     };
     const res = editing
-      ? await supabase.from("transactions").update(payload).eq("id", editing.id)
-      : await supabase.from("transactions").insert(payload);
+      ? await supabase.from("transactions").update(payload).eq("id", editing.id).select().single()
+      : await supabase.from("transactions").insert(payload).select().single();
     if (res.error) return toast.error(res.error.message);
+    await logActivity(editing ? "update" : "create", "transaction", res.data?.id, { name: form.name, amount: payload.amount });
     toast.success(editing ? "Movimentação atualizada" : "Movimentação criada");
     setOpen(false); reset();
     qc.invalidateQueries({ queryKey: ["transactions"] });
     qc.invalidateQueries({ queryKey: ["dashboard"] });
   };
 
-  const remove = async (id: string) => {
-    const { error } = await supabase.from("transactions").delete().eq("id", id);
+  const remove = async (t: Tx) => {
+    const { error } = await supabase.from("transactions").delete().eq("id", t.id);
     if (error) return toast.error(error.message);
+    if (t.attachment_url) await supabase.storage.from("attachments").remove([t.attachment_url]);
+    await logActivity("delete", "transaction", t.id, { name: t.name });
     toast.success("Excluído");
     qc.invalidateQueries({ queryKey: ["transactions"] });
     qc.invalidateQueries({ queryKey: ["dashboard"] });
