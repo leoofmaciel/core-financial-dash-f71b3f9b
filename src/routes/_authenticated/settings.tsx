@@ -1,0 +1,84 @@
+import { createFileRoute } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { toast } from "sonner";
+import { Upload } from "lucide-react";
+
+export const Route = createFileRoute("/_authenticated/settings")({ component: SettingsPage });
+
+function SettingsPage() {
+  const [form, setForm] = useState<any>({ company_name: "", cnpj: "", address: "", phone: "", email: "", logo_url: "" });
+  const [uploading, setUploading] = useState(false);
+
+  useEffect(() => {
+    (async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const { data } = await supabase.from("company_settings").select("*").eq("user_id", user.id).maybeSingle();
+      if (data) setForm(data);
+    })();
+  }, []);
+
+  const save = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    const payload = { ...form, user_id: user.id };
+    delete payload.id; delete payload.created_at; delete payload.updated_at;
+    const { error } = await supabase.from("company_settings").upsert(payload, { onConflict: "user_id" });
+    if (error) return toast.error(error.message);
+    toast.success("Configurações salvas");
+  };
+
+  const uploadLogo = async (file: File) => {
+    setUploading(true);
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    const path = `${user.id}/logo-${Date.now()}.${file.name.split(".").pop()}`;
+    const { error } = await supabase.storage.from("logos").upload(path, file, { upsert: true });
+    if (error) { setUploading(false); return toast.error(error.message); }
+    const { data: { publicUrl } } = supabase.storage.from("logos").getPublicUrl(path);
+    setForm({ ...form, logo_url: publicUrl });
+    setUploading(false);
+    toast.success("Logo enviado");
+  };
+
+  return (
+    <div className="space-y-6 max-w-3xl">
+      <div>
+        <h1 className="text-2xl sm:text-3xl font-bold">Configurações</h1>
+        <p className="text-sm text-muted-foreground">Dados da empresa que aparecem nos PDFs.</p>
+      </div>
+
+      <Card>
+        <CardHeader><CardTitle>Dados da empresa</CardTitle></CardHeader>
+        <CardContent className="grid gap-4 sm:grid-cols-2">
+          <div className="space-y-2 sm:col-span-2 flex items-center gap-4">
+            {form.logo_url && <img src={form.logo_url} alt="logo" className="h-20 w-20 object-contain rounded-lg border bg-white p-2" />}
+            <div>
+              <Label className="block mb-2">Logo</Label>
+              <Button asChild variant="outline" disabled={uploading}>
+                <label className="cursor-pointer">
+                  <Upload className="h-4 w-4 mr-1" /> {uploading ? "Enviando..." : "Enviar logo"}
+                  <input type="file" accept="image/*" hidden onChange={(e) => e.target.files?.[0] && uploadLogo(e.target.files[0])} />
+                </label>
+              </Button>
+            </div>
+          </div>
+          <div className="space-y-2"><Label>Nome da empresa</Label><Input value={form.company_name || ""} onChange={(e) => setForm({ ...form, company_name: e.target.value })} /></div>
+          <div className="space-y-2"><Label>CNPJ</Label><Input value={form.cnpj || ""} onChange={(e) => setForm({ ...form, cnpj: e.target.value })} /></div>
+          <div className="space-y-2 sm:col-span-2"><Label>Endereço</Label><Input value={form.address || ""} onChange={(e) => setForm({ ...form, address: e.target.value })} /></div>
+          <div className="space-y-2"><Label>Telefone</Label><Input value={form.phone || ""} onChange={(e) => setForm({ ...form, phone: e.target.value })} /></div>
+          <div className="space-y-2"><Label>E-mail</Label><Input type="email" value={form.email || ""} onChange={(e) => setForm({ ...form, email: e.target.value })} /></div>
+        </CardContent>
+      </Card>
+
+      <div className="flex justify-end">
+        <Button onClick={save}>Salvar configurações</Button>
+      </div>
+    </div>
+  );
+}
