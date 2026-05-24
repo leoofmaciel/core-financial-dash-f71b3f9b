@@ -142,6 +142,7 @@ function TransactionsPage() {
     if (filterStatus !== "all" && t.status !== filterStatus) return false;
     return true;
   });
+  const pageItems = paginate(filtered, page, pageSize);
 
   const statusVariant: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
     pago: "default", pendente: "secondary", atrasado: "destructive",
@@ -295,7 +296,7 @@ function TransactionsPage() {
             <TableBody>
               {isLoading && <TableRow><TableCell colSpan={7} className="text-center py-8 text-muted-foreground">Carregando...</TableCell></TableRow>}
               {!isLoading && filtered.length === 0 && <TableRow><TableCell colSpan={7} className="text-center py-8 text-muted-foreground">Nenhuma movimentação.</TableCell></TableRow>}
-              {filtered.map((t) => (
+              {pageItems.map((t) => (
                 <TableRow key={t.id}>
                   <TableCell className="font-mono text-xs">{t.code}</TableCell>
                   <TableCell>
