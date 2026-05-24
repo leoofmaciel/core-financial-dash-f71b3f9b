@@ -340,6 +340,7 @@ function TransactionsPage() {
               ))}
             </TableBody>
           </Table>
+          <Pagination page={page} pageSize={pageSize} total={filtered.length} onChange={setPage} />
         </CardContent>
       </Card>
     </div>
