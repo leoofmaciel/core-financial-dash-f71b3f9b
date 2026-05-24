@@ -8,10 +8,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { FileDown } from "lucide-react";
+import { FileDown, FileSpreadsheet } from "lucide-react";
 import { formatBRL, formatDate } from "@/lib/format";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import { exportCSV } from "@/lib/csv";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend, BarChart, Bar, XAxis, YAxis, CartesianGrid } from "recharts";
 
 export const Route = createFileRoute("/_authenticated/reports")({ component: ReportsPage });
@@ -72,14 +73,32 @@ function ReportsPage() {
     doc.save(`relatorio-${from}_${to}.pdf`);
   };
 
+  const exportExcel = () => {
+    exportCSV(`relatorio-${from}_${to}.csv`, [
+      ["Código", "Data", "Nome", "Categoria", "Tipo", "Status", "Valor"],
+      ...txs.map((t: any) => [
+        t.code, formatDate(t.transaction_date), t.name, t.categories?.name ?? "—",
+        t.type, t.status, Number(t.amount).toFixed(2).replace(".", ","),
+      ]),
+      [],
+      ["Totais"],
+      ["Entradas", "", "", "", "", "", totalIn.toFixed(2).replace(".", ",")],
+      ["Saídas", "", "", "", "", "", totalOut.toFixed(2).replace(".", ",")],
+      ["Saldo", "", "", "", "", "", (totalIn - totalOut).toFixed(2).replace(".", ",")],
+    ]);
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold">Relatórios</h1>
-          <p className="text-sm text-muted-foreground">Filtre, totalize e exporte em PDF.</p>
+          <p className="text-sm text-muted-foreground">Filtre, totalize e exporte.</p>
         </div>
-        <Button onClick={exportPDF}><FileDown className="h-4 w-4 mr-1" /> Exportar PDF</Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={exportExcel}><FileSpreadsheet className="h-4 w-4 mr-1" /> Excel</Button>
+          <Button onClick={exportPDF}><FileDown className="h-4 w-4 mr-1" /> PDF</Button>
+        </div>
       </div>
 
       <Card>
