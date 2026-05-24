@@ -54,7 +54,7 @@ function LogsPage() {
             <TableBody>
               {isLoading && <TableRow><TableCell colSpan={4} className="text-center py-8 text-muted-foreground">Carregando...</TableCell></TableRow>}
               {!isLoading && logs.length === 0 && <TableRow><TableCell colSpan={4} className="text-center py-8 text-muted-foreground">Nenhum registro.</TableCell></TableRow>}
-              {logs.map((l: any) => (
+              {paginate(logs, page, pageSize).map((l: any) => (
                 <TableRow key={l.id}>
                   <TableCell className="text-sm whitespace-nowrap">
                     {formatDate(l.created_at)} {new Date(l.created_at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
@@ -68,6 +68,7 @@ function LogsPage() {
               ))}
             </TableBody>
           </Table>
+          <Pagination page={page} pageSize={pageSize} total={logs.length} onChange={setPage} />
         </CardContent>
       </Card>
     </div>
