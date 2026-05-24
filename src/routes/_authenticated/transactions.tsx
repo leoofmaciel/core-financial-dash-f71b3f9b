@@ -1,0 +1,279 @@
+import { createFileRoute } from "@tanstack/react-router";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { Plus, Pencil, Trash2, Search } from "lucide-react";
+import { toast } from "sonner";
+import { formatBRL, formatDate } from "@/lib/format";
+
+export const Route = createFileRoute("/_authenticated/transactions")({ component: TransactionsPage });
+
+type Tx = {
+  id: string; code: number; type: "entrada" | "saida"; name: string; category_id: string | null;
+  description: string | null; amount: number; payment_method: string | null;
+  status: "pago" | "pendente" | "atrasado"; transaction_date: string; due_date: string | null;
+  notes: string | null; categories?: { name: string; color: string } | null;
+};
+
+const emptyForm = {
+  type: "entrada" as "entrada" | "saida", name: "", category_id: "", description: "", amount: "",
+  payment_method: "", status: "pago" as "pago" | "pendente" | "atrasado",
+  transaction_date: new Date().toISOString().slice(0, 10), due_date: "", notes: "",
+};
+
+function TransactionsPage() {
+  const qc = useQueryClient();
+  const [open, setOpen] = useState(false);
+  const [editing, setEditing] = useState<Tx | null>(null);
+  const [form, setForm] = useState(emptyForm);
+  const [search, setSearch] = useState("");
+  const [filterType, setFilterType] = useState<string>("all");
+  const [filterStatus, setFilterStatus] = useState<string>("all");
+
+  const { data: txs = [], isLoading } = useQuery({
+    queryKey: ["transactions"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("transactions").select("*, categories(name, color)").order("transaction_date", { ascending: false });
+      if (error) throw error;
+      return data as Tx[];
+    },
+  });
+
+  const { data: categories = [] } = useQuery({
+    queryKey: ["categories"],
+    queryFn: async () => {
+      const { data } = await supabase.from("categories").select("*").order("name");
+      return data ?? [];
+    },
+  });
+
+  const reset = () => { setForm(emptyForm); setEditing(null); };
+
+  const openNew = () => { reset(); setOpen(true); };
+  const openEdit = (t: Tx) => {
+    setEditing(t);
+    setForm({
+      type: t.type, name: t.name, category_id: t.category_id ?? "", description: t.description ?? "",
+      amount: String(t.amount), payment_method: t.payment_method ?? "", status: t.status,
+      transaction_date: t.transaction_date, due_date: t.due_date ?? "", notes: t.notes ?? "",
+    });
+    setOpen(true);
+  };
+
+  const save = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    const payload = {
+      user_id: user.id, type: form.type, name: form.name,
+      category_id: form.category_id || null, description: form.description || null,
+      amount: Number(form.amount), payment_method: form.payment_method || null,
+      status: form.status, transaction_date: form.transaction_date,
+      due_date: form.due_date || null, notes: form.notes || null,
+    };
+    const res = editing
+      ? await supabase.from("transactions").update(payload).eq("id", editing.id)
+      : await supabase.from("transactions").insert(payload);
+    if (res.error) return toast.error(res.error.message);
+    toast.success(editing ? "Movimentação atualizada" : "Movimentação criada");
+    setOpen(false); reset();
+    qc.invalidateQueries({ queryKey: ["transactions"] });
+    qc.invalidateQueries({ queryKey: ["dashboard"] });
+  };
+
+  const remove = async (id: string) => {
+    const { error } = await supabase.from("transactions").delete().eq("id", id);
+    if (error) return toast.error(error.message);
+    toast.success("Excluído");
+    qc.invalidateQueries({ queryKey: ["transactions"] });
+    qc.invalidateQueries({ queryKey: ["dashboard"] });
+  };
+
+  const filtered = txs.filter((t) => {
+    if (search && !t.name.toLowerCase().includes(search.toLowerCase()) && !String(t.code).includes(search)) return false;
+    if (filterType !== "all" && t.type !== filterType) return false;
+    if (filterStatus !== "all" && t.status !== filterStatus) return false;
+    return true;
+  });
+
+  const statusVariant: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
+    pago: "default", pendente: "secondary", atrasado: "destructive",
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-bold">Movimentações</h1>
+          <p className="text-sm text-muted-foreground">Controle de entradas e saídas.</p>
+        </div>
+        <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) reset(); }}>
+          <DialogTrigger asChild>
+            <Button onClick={openNew}><Plus className="h-4 w-4 mr-1" /> Nova movimentação</Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader><DialogTitle>{editing ? "Editar" : "Nova"} movimentação</DialogTitle></DialogHeader>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label>Tipo</Label>
+                <Select value={form.type} onValueChange={(v: "entrada" | "saida") => setForm({ ...form, type: v })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="entrada">Entrada</SelectItem>
+                    <SelectItem value="saida">Saída</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Status</Label>
+                <Select value={form.status} onValueChange={(v: "pago" | "pendente" | "atrasado") => setForm({ ...form, status: v })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="pago">Pago</SelectItem>
+                    <SelectItem value="pendente">Pendente</SelectItem>
+                    <SelectItem value="atrasado">Atrasado</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2 sm:col-span-2">
+                <Label>Nome</Label>
+                <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+              </div>
+              <div className="space-y-2">
+                <Label>Categoria</Label>
+                <Select value={form.category_id || "none"} onValueChange={(v) => setForm({ ...form, category_id: v === "none" ? "" : v })}>
+                  <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Sem categoria</SelectItem>
+                    {categories.map((c: any) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Valor (R$)</Label>
+                <Input type="number" step="0.01" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} />
+              </div>
+              <div className="space-y-2">
+                <Label>Forma de pagamento</Label>
+                <Input value={form.payment_method} onChange={(e) => setForm({ ...form, payment_method: e.target.value })} placeholder="PIX, Cartão, Boleto..." />
+              </div>
+              <div className="space-y-2">
+                <Label>Data da movimentação</Label>
+                <Input type="date" value={form.transaction_date} onChange={(e) => setForm({ ...form, transaction_date: e.target.value })} />
+              </div>
+              <div className="space-y-2 sm:col-span-2">
+                <Label>Vencimento</Label>
+                <Input type="date" value={form.due_date} onChange={(e) => setForm({ ...form, due_date: e.target.value })} />
+              </div>
+              <div className="space-y-2 sm:col-span-2">
+                <Label>Descrição</Label>
+                <Input value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
+              </div>
+              <div className="space-y-2 sm:col-span-2">
+                <Label>Observações</Label>
+                <Textarea value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} rows={2} />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setOpen(false)}>Cancelar</Button>
+              <Button onClick={save}>{editing ? "Atualizar" : "Criar"}</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </div>
+
+      <Card>
+        <CardContent className="p-4 flex flex-wrap gap-3 items-center">
+          <div className="relative flex-1 min-w-[200px]">
+            <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+            <Input className="pl-9" placeholder="Buscar por nome ou código..." value={search} onChange={(e) => setSearch(e.target.value)} />
+          </div>
+          <Select value={filterType} onValueChange={setFilterType}>
+            <SelectTrigger className="w-[140px]"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos os tipos</SelectItem>
+              <SelectItem value="entrada">Entradas</SelectItem>
+              <SelectItem value="saida">Saídas</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={filterStatus} onValueChange={setFilterStatus}>
+            <SelectTrigger className="w-[140px]"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos status</SelectItem>
+              <SelectItem value="pago">Pago</SelectItem>
+              <SelectItem value="pendente">Pendente</SelectItem>
+              <SelectItem value="atrasado">Atrasado</SelectItem>
+            </SelectContent>
+          </Select>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardContent className="p-0 overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>#</TableHead>
+                <TableHead>Nome</TableHead>
+                <TableHead>Categoria</TableHead>
+                <TableHead>Data</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead className="text-right">Valor</TableHead>
+                <TableHead className="w-[100px]"></TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {isLoading && <TableRow><TableCell colSpan={7} className="text-center py-8 text-muted-foreground">Carregando...</TableCell></TableRow>}
+              {!isLoading && filtered.length === 0 && <TableRow><TableCell colSpan={7} className="text-center py-8 text-muted-foreground">Nenhuma movimentação.</TableCell></TableRow>}
+              {filtered.map((t) => (
+                <TableRow key={t.id}>
+                  <TableCell className="font-mono text-xs">{t.code}</TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      <span className={`h-2 w-2 rounded-full ${t.type === "entrada" ? "bg-success" : "bg-destructive"}`} />
+                      <span className="font-medium">{t.name}</span>
+                    </div>
+                  </TableCell>
+                  <TableCell className="text-muted-foreground text-sm">{t.categories?.name ?? "—"}</TableCell>
+                  <TableCell className="text-sm">{formatDate(t.transaction_date)}</TableCell>
+                  <TableCell><Badge variant={statusVariant[t.status]}>{t.status}</Badge></TableCell>
+                  <TableCell className={`text-right font-semibold ${t.type === "entrada" ? "text-success" : "text-destructive"}`}>
+                    {t.type === "entrada" ? "+" : "-"} {formatBRL(t.amount)}
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex gap-1 justify-end">
+                      <Button size="icon" variant="ghost" onClick={() => openEdit(t)}><Pencil className="h-4 w-4" /></Button>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild><Button size="icon" variant="ghost"><Trash2 className="h-4 w-4 text-destructive" /></Button></AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Excluir movimentação?</AlertDialogTitle>
+                            <AlertDialogDescription>Esta ação não pode ser desfeita.</AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => remove(t.id)}>Excluir</AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
