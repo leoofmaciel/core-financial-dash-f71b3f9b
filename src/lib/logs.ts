@@ -13,6 +13,6 @@ export async function logActivity(
     action,
     entity,
     entity_id: entity_id ?? null,
-    details: details ?? null,
+    details: (details ?? null) as never,
   });
 }
