@@ -5,6 +5,7 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { GlobalSearch } from "@/components/global-search";
+import { NotificationsBell } from "@/components/notifications-bell";
 import { useAuth } from "@/hooks/use-auth";
 import { Loader2 } from "lucide-react";
 
@@ -42,6 +43,7 @@ function AuthenticatedLayout() {
             <SidebarTrigger />
             <GlobalSearch />
             <div className="flex-1" />
+            <NotificationsBell />
             <ThemeToggle />
             <span className="text-sm text-muted-foreground hidden sm:inline">{user.email}</span>
           </header>
