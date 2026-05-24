@@ -1,14 +1,19 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { formatDate } from "@/lib/format";
+import { Pagination, paginate } from "@/components/pagination";
 
 export const Route = createFileRoute("/_authenticated/logs")({ component: LogsPage });
 
 function LogsPage() {
+  const [page, setPage] = useState(1);
+  const pageSize = 20;
+
   const { data: logs = [], isLoading } = useQuery({
     queryKey: ["activity-logs"],
     queryFn: async () => {

@@ -10,6 +10,7 @@ import { Plus, Trash2, FileDown, Save } from "lucide-react";
 import { formatBRL } from "@/lib/format";
 import { toast } from "sonner";
 import { generateBudgetPDF } from "@/lib/pdf";
+import { logActivity } from "@/lib/logs";
 
 export const Route = createFileRoute("/_authenticated/budgets/$id")({ component: BudgetEditor });
 
@@ -76,6 +77,7 @@ function BudgetEditor() {
     }));
     if (rows.length) await supabase.from("budget_items").insert(rows);
 
+    await logActivity(isNew ? "create" : "update", "budget", budgetId!, { client: budget.client_name, total });
     toast.success("Orçamento salvo");
 
     if (then === "pdf") {
