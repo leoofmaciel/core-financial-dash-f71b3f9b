@@ -16,6 +16,7 @@ import { Plus, Pencil, Trash2, Search, Paperclip, Upload, X } from "lucide-react
 import { toast } from "sonner";
 import { formatBRL, formatDate } from "@/lib/format";
 import { logActivity } from "@/lib/logs";
+import { Pagination, paginate } from "@/components/pagination";
 
 export const Route = createFileRoute("/_authenticated/transactions")({ component: TransactionsPage });
 
