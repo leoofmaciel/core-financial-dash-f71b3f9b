@@ -97,6 +97,7 @@ function BudgetsList() {
               ))}
             </TableBody>
           </Table>
+          <Pagination page={page} pageSize={pageSize} total={budgets.length} onChange={setPage} />
         </CardContent>
       </Card>
     </div>
