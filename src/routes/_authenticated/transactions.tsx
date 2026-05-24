@@ -16,6 +16,7 @@ import { Plus, Pencil, Trash2, Search, Paperclip, Upload, X } from "lucide-react
 import { toast } from "sonner";
 import { formatBRL, formatDate } from "@/lib/format";
 import { logActivity } from "@/lib/logs";
+import { Pagination, paginate } from "@/components/pagination";
 
 export const Route = createFileRoute("/_authenticated/transactions")({ component: TransactionsPage });
 
@@ -43,6 +44,8 @@ function TransactionsPage() {
   const [filterType, setFilterType] = useState<string>("all");
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [uploading, setUploading] = useState(false);
+  const [page, setPage] = useState(1);
+  const pageSize = 15;
 
   const { data: txs = [], isLoading } = useQuery({
     queryKey: ["transactions"],
@@ -139,6 +142,7 @@ function TransactionsPage() {
     if (filterStatus !== "all" && t.status !== filterStatus) return false;
     return true;
   });
+  const pageItems = paginate(filtered, page, pageSize);
 
   const statusVariant: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
     pago: "default", pendente: "secondary", atrasado: "destructive",
@@ -292,7 +296,7 @@ function TransactionsPage() {
             <TableBody>
               {isLoading && <TableRow><TableCell colSpan={7} className="text-center py-8 text-muted-foreground">Carregando...</TableCell></TableRow>}
               {!isLoading && filtered.length === 0 && <TableRow><TableCell colSpan={7} className="text-center py-8 text-muted-foreground">Nenhuma movimentação.</TableCell></TableRow>}
-              {filtered.map((t) => (
+              {pageItems.map((t) => (
                 <TableRow key={t.id}>
                   <TableCell className="font-mono text-xs">{t.code}</TableCell>
                   <TableCell>
@@ -336,6 +340,7 @@ function TransactionsPage() {
               ))}
             </TableBody>
           </Table>
+          <Pagination page={page} pageSize={pageSize} total={filtered.length} onChange={setPage} />
         </CardContent>
       </Card>
     </div>

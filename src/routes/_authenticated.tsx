@@ -3,6 +3,8 @@ import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
+import { ThemeToggle } from "@/components/theme-toggle";
+import { GlobalSearch } from "@/components/global-search";
 import { useAuth } from "@/hooks/use-auth";
 import { Loader2 } from "lucide-react";
 
@@ -38,7 +40,9 @@ function AuthenticatedLayout() {
         <div className="flex-1 flex flex-col min-w-0">
           <header className="h-14 flex items-center gap-3 border-b bg-card/80 backdrop-blur px-4 sticky top-0 z-10">
             <SidebarTrigger />
+            <GlobalSearch />
             <div className="flex-1" />
+            <ThemeToggle />
             <span className="text-sm text-muted-foreground hidden sm:inline">{user.email}</span>
           </header>
           <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-x-hidden">

@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Plus, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import { logActivity } from "@/lib/logs";
 
 export const Route = createFileRoute("/_authenticated/categories")({ component: CategoriesPage });
 
@@ -34,9 +35,10 @@ function CategoriesPage() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
     const res = editing
-      ? await supabase.from("categories").update({ name, color }).eq("id", editing.id)
-      : await supabase.from("categories").insert({ user_id: user.id, name, color });
+      ? await supabase.from("categories").update({ name, color }).eq("id", editing.id).select().single()
+      : await supabase.from("categories").insert({ user_id: user.id, name, color }).select().single();
     if (res.error) return toast.error(res.error.message);
+    await logActivity(editing ? "update" : "create", "category", res.data?.id, { name });
     toast.success(editing ? "Atualizado" : "Criado");
     setOpen(false); setName(""); setEditing(null);
     qc.invalidateQueries({ queryKey: ["categories"] });
@@ -52,9 +54,10 @@ function CategoriesPage() {
     qc.invalidateQueries({ queryKey: ["categories"] });
   };
 
-  const remove = async (id: string) => {
-    const { error } = await supabase.from("categories").delete().eq("id", id);
+  const remove = async (cat: any) => {
+    const { error } = await supabase.from("categories").delete().eq("id", cat.id);
     if (error) return toast.error(error.message);
+    await logActivity("delete", "category", cat.id, { name: cat.name });
     toast.success("Excluída");
     qc.invalidateQueries({ queryKey: ["categories"] });
   };
@@ -101,7 +104,7 @@ function CategoriesPage() {
                   <AlertDialogTrigger asChild><Button size="icon" variant="ghost"><Trash2 className="h-4 w-4 text-destructive" /></Button></AlertDialogTrigger>
                   <AlertDialogContent>
                     <AlertDialogHeader><AlertDialogTitle>Excluir "{c.name}"?</AlertDialogTitle><AlertDialogDescription>Movimentações ficarão sem categoria.</AlertDialogDescription></AlertDialogHeader>
-                    <AlertDialogFooter><AlertDialogCancel>Cancelar</AlertDialogCancel><AlertDialogAction onClick={() => remove(c.id)}>Excluir</AlertDialogAction></AlertDialogFooter>
+                    <AlertDialogFooter><AlertDialogCancel>Cancelar</AlertDialogCancel><AlertDialogAction onClick={() => remove(c)}>Excluir</AlertDialogAction></AlertDialogFooter>
                   </AlertDialogContent>
                 </AlertDialog>
               </div>
