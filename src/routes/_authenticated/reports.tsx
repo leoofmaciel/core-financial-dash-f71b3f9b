@@ -12,6 +12,7 @@ import { FileDown } from "lucide-react";
 import { formatBRL, formatDate } from "@/lib/format";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend, BarChart, Bar, XAxis, YAxis, CartesianGrid } from "recharts";
 
 export const Route = createFileRoute("/_authenticated/reports")({ component: ReportsPage });
 
@@ -42,6 +43,18 @@ function ReportsPage() {
 
   const totalIn = txs.filter((t: any) => t.type === "entrada").reduce((s: number, t: any) => s + Number(t.amount), 0);
   const totalOut = txs.filter((t: any) => t.type === "saida").reduce((s: number, t: any) => s + Number(t.amount), 0);
+
+  const groupByCategory = (kind: "entrada" | "saida") => {
+    const map = new Map<string, number>();
+    txs.filter((t: any) => t.type === kind).forEach((t: any) => {
+      const name = t.categories?.name ?? "Sem categoria";
+      map.set(name, (map.get(name) ?? 0) + Number(t.amount));
+    });
+    return Array.from(map.entries()).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value);
+  };
+  const incomeByCat = groupByCategory("entrada");
+  const expenseByCat = groupByCategory("saida");
+  const pieColors = ["#1e40af", "#0891b2", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899", "#64748b"];
 
   const exportPDF = () => {
     const doc = new jsPDF();
@@ -101,6 +114,45 @@ function ReportsPage() {
         <Card><CardHeader><CardTitle className="text-sm text-muted-foreground">Entradas</CardTitle></CardHeader><CardContent className="text-2xl font-bold text-success">{formatBRL(totalIn)}</CardContent></Card>
         <Card><CardHeader><CardTitle className="text-sm text-muted-foreground">Saídas</CardTitle></CardHeader><CardContent className="text-2xl font-bold text-destructive">{formatBRL(totalOut)}</CardContent></Card>
         <Card><CardHeader><CardTitle className="text-sm text-muted-foreground">Saldo</CardTitle></CardHeader><CardContent className={`text-2xl font-bold ${totalIn - totalOut >= 0 ? "text-primary" : "text-destructive"}`}>{formatBRL(totalIn - totalOut)}</CardContent></Card>
+      </div>
+
+      <div className="grid gap-4 lg:grid-cols-2">
+        <Card>
+          <CardHeader><CardTitle className="text-base">Saídas por categoria</CardTitle></CardHeader>
+          <CardContent className="h-[280px]">
+            {expenseByCat.length === 0 ? (
+              <div className="h-full flex items-center justify-center text-sm text-muted-foreground">Sem dados</div>
+            ) : (
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie data={expenseByCat} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={90} label={(e: any) => e.name}>
+                    {expenseByCat.map((_, i) => <Cell key={i} fill={pieColors[i % pieColors.length]} />)}
+                  </Pie>
+                  <Tooltip formatter={(v: number) => formatBRL(v)} />
+                </PieChart>
+              </ResponsiveContainer>
+            )}
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader><CardTitle className="text-base">Entradas por categoria</CardTitle></CardHeader>
+          <CardContent className="h-[280px]">
+            {incomeByCat.length === 0 ? (
+              <div className="h-full flex items-center justify-center text-sm text-muted-foreground">Sem dados</div>
+            ) : (
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={incomeByCat}>
+                  <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+                  <XAxis dataKey="name" className="text-xs" />
+                  <YAxis className="text-xs" tickFormatter={(v) => `R$${v}`} />
+                  <Tooltip formatter={(v: number) => formatBRL(v)} />
+                  <Legend />
+                  <Bar dataKey="value" name="Total" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            )}
+          </CardContent>
+        </Card>
       </div>
 
       <Card>

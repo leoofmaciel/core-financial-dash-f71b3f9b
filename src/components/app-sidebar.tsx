@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { LayoutDashboard, ArrowRightLeft, Tags, FileText, BarChart3, Settings, Users, LogOut } from "lucide-react";
+import { LayoutDashboard, ArrowRightLeft, Tags, FileText, BarChart3, Settings, Users, LogOut, History } from "lucide-react";
 import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel,
   SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarHeader, SidebarFooter, useSidebar,
@@ -18,6 +18,7 @@ const mainItems = [
 ];
 
 const settingsItems = [
+  { title: "Histórico", url: "/logs", icon: History },
   { title: "Configurações", url: "/settings", icon: Settings },
   { title: "Usuários", url: "/users", icon: Users, adminOnly: true },
 ];
