@@ -44,6 +44,8 @@ function TransactionsPage() {
   const [filterType, setFilterType] = useState<string>("all");
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [uploading, setUploading] = useState(false);
+  const [page, setPage] = useState(1);
+  const pageSize = 15;
 
   const { data: txs = [], isLoading } = useQuery({
     queryKey: ["transactions"],
