@@ -217,6 +217,29 @@ function TransactionsPage() {
                 <Label>Observações</Label>
                 <Textarea value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} rows={2} />
               </div>
+              <div className="space-y-2 sm:col-span-2">
+                <Label>Comprovante</Label>
+                {form.attachment_url ? (
+                  <div className="flex items-center gap-2 p-2 rounded-md border bg-muted/30">
+                    <Paperclip className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-sm flex-1 truncate">{form.attachment_url.split("/").pop()}</span>
+                    <Button type="button" size="sm" variant="ghost" onClick={() => downloadAttachment(form.attachment_url)}>Ver</Button>
+                    <Button type="button" size="icon" variant="ghost" onClick={removeAttachment}><X className="h-4 w-4" /></Button>
+                  </div>
+                ) : (
+                  <label className="flex items-center justify-center gap-2 p-3 rounded-md border border-dashed cursor-pointer hover:bg-muted/30 transition">
+                    <Upload className="h-4 w-4" />
+                    <span className="text-sm">{uploading ? "Enviando..." : "Selecionar arquivo (PDF, imagem)"}</span>
+                    <input
+                      type="file"
+                      className="hidden"
+                      accept="image/*,application/pdf"
+                      disabled={uploading}
+                      onChange={(e) => e.target.files?.[0] && handleUpload(e.target.files[0])}
+                    />
+                  </label>
+                )}
+              </div>
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => setOpen(false)}>Cancelar</Button>
@@ -282,7 +305,14 @@ function TransactionsPage() {
                   <TableCell className="text-sm">{formatDate(t.transaction_date)}</TableCell>
                   <TableCell><Badge variant={statusVariant[t.status]}>{t.status}</Badge></TableCell>
                   <TableCell className={`text-right font-semibold ${t.type === "entrada" ? "text-success" : "text-destructive"}`}>
-                    {t.type === "entrada" ? "+" : "-"} {formatBRL(t.amount)}
+                    <div className="flex items-center justify-end gap-2">
+                      {t.attachment_url && (
+                        <button onClick={() => downloadAttachment(t.attachment_url!)} title="Ver comprovante">
+                          <Paperclip className="h-3.5 w-3.5 text-muted-foreground hover:text-primary" />
+                        </button>
+                      )}
+                      <span>{t.type === "entrada" ? "+" : "-"} {formatBRL(t.amount)}</span>
+                    </div>
                   </TableCell>
                   <TableCell>
                     <div className="flex gap-1 justify-end">
@@ -296,7 +326,7 @@ function TransactionsPage() {
                           </AlertDialogHeader>
                           <AlertDialogFooter>
                             <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                            <AlertDialogAction onClick={() => remove(t.id)}>Excluir</AlertDialogAction>
+                            <AlertDialogAction onClick={() => remove(t)}>Excluir</AlertDialogAction>
                           </AlertDialogFooter>
                         </AlertDialogContent>
                       </AlertDialog>
