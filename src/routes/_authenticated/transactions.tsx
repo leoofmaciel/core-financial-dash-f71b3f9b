@@ -80,7 +80,13 @@ function TransactionsPage() {
 
   const reset = () => { setForm(emptyForm); setEditing(null); };
 
-  const openNew = () => { reset(); setOpen(true); };
+  const openNew = () => {
+    reset();
+    const defType: "entrada" | "saida" | null =
+      filterType === "entrada" ? "entrada" : filterType === "saida" ? "saida" : null;
+    if (defType) setForm({ ...emptyForm, type: defType });
+    setOpen(true);
+  };
   const openEdit = (t: Tx) => {
     setEditing(t);
     setForm({
