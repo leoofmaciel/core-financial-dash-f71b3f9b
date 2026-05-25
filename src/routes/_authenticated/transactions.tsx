@@ -12,8 +12,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Plus, Pencil, Trash2, Search, Paperclip, Upload, X, FileDown, Filter } from "lucide-react";
+import { Plus, Pencil, Trash2, Search, Paperclip, Upload, X, FileDown, Filter, ArrowDownCircle, ArrowUpCircle, ListFilter } from "lucide-react";
 import { toast } from "sonner";
 import { formatBRL, formatDate } from "@/lib/format";
 import { logActivity } from "@/lib/logs";
@@ -79,7 +80,13 @@ function TransactionsPage() {
 
   const reset = () => { setForm(emptyForm); setEditing(null); };
 
-  const openNew = () => { reset(); setOpen(true); };
+  const openNew = () => {
+    reset();
+    const defType: "entrada" | "saida" | null =
+      filterType === "entrada" ? "entrada" : filterType === "saida" ? "saida" : null;
+    if (defType) setForm({ ...emptyForm, type: defType });
+    setOpen(true);
+  };
   const openEdit = (t: Tx) => {
     setEditing(t);
     setForm({
@@ -200,14 +207,19 @@ function TransactionsPage() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold">Movimentações</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold">
+            {filterType === "entrada" ? "Contas a receber" : filterType === "saida" ? "Contas a pagar" : "Movimentações"}
+          </h1>
           <p className="text-sm text-muted-foreground">Controle de entradas e saídas.</p>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" onClick={exportToCSV}><FileDown className="h-4 w-4 mr-1" /> Exportar</Button>
           <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) reset(); }}>
             <DialogTrigger asChild>
-              <Button onClick={openNew}><Plus className="h-4 w-4 mr-1" /> Nova movimentação</Button>
+              <Button onClick={openNew}>
+                <Plus className="h-4 w-4 mr-1" />
+                {filterType === "entrada" ? "Nova conta a receber" : filterType === "saida" ? "Nova conta a pagar" : "Nova movimentação"}
+              </Button>
             </DialogTrigger>
             <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
               <DialogHeader><DialogTitle>{editing ? "Editar" : "Nova"} movimentação</DialogTitle></DialogHeader>
@@ -330,6 +342,14 @@ function TransactionsPage() {
         </div>
       </div>
 
+      <Tabs value={filterType} onValueChange={(v) => { setFilterType(v); setPage(1); }}>
+        <TabsList>
+          <TabsTrigger value="all"><ListFilter className="h-4 w-4 mr-1" /> Todas</TabsTrigger>
+          <TabsTrigger value="entrada"><ArrowDownCircle className="h-4 w-4 mr-1 text-success" /> A receber</TabsTrigger>
+          <TabsTrigger value="saida"><ArrowUpCircle className="h-4 w-4 mr-1 text-destructive" /> A pagar</TabsTrigger>
+        </TabsList>
+      </Tabs>
+
       <Card>
         <CardContent className="p-4 space-y-3">
           <div className="flex flex-wrap gap-3 items-center">
@@ -337,14 +357,6 @@ function TransactionsPage() {
               <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
               <Input className="pl-9" placeholder="Buscar por nome ou código..." value={search} onChange={(e) => setSearch(e.target.value)} />
             </div>
-            <Select value={filterType} onValueChange={setFilterType}>
-              <SelectTrigger className="w-[140px]"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos os tipos</SelectItem>
-                <SelectItem value="entrada">Entradas</SelectItem>
-                <SelectItem value="saida">Saídas</SelectItem>
-              </SelectContent>
-            </Select>
             <Select value={filterStatus} onValueChange={setFilterStatus}>
               <SelectTrigger className="w-[140px]"><SelectValue /></SelectTrigger>
               <SelectContent>
