@@ -30,7 +30,16 @@ function SignupPage() {
       },
     });
     setLoading(false);
-    if (error) return toast.error(error.message);
+    if (error) {
+      const map: Record<string, string> = {
+        "User already registered": "Este e-mail já está cadastrado",
+        "Password should be at least 6 characters": "Senha deve ter ao menos 6 caracteres",
+        "Unable to validate email address: invalid format": "E-mail inválido",
+        "Signup requires a valid password": "Informe uma senha válida",
+        "Email rate limit exceeded": "Muitas tentativas. Aguarde alguns minutos e tente novamente",
+      };
+      return toast.error(map[error.message] ?? error.message);
+    }
     toast.success("Conta criada! Você já pode entrar.");
     navigate({ to: "/dashboard" });
   };
