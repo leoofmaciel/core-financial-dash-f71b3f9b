@@ -223,6 +223,63 @@ export type Database = {
         }
         Relationships: []
       }
+      recurrences: {
+        Row: {
+          active: boolean
+          amount: number
+          category_id: string | null
+          created_at: string
+          day_of_month: number | null
+          day_of_week: number | null
+          description: string | null
+          frequency: string
+          id: string
+          last_generated_at: string | null
+          name: string
+          next_run: string
+          payment_method: string | null
+          type: Database["public"]["Enums"]["tx_type"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          active?: boolean
+          amount: number
+          category_id?: string | null
+          created_at?: string
+          day_of_month?: number | null
+          day_of_week?: number | null
+          description?: string | null
+          frequency?: string
+          id?: string
+          last_generated_at?: string | null
+          name: string
+          next_run: string
+          payment_method?: string | null
+          type: Database["public"]["Enums"]["tx_type"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          active?: boolean
+          amount?: number
+          category_id?: string | null
+          created_at?: string
+          day_of_month?: number | null
+          day_of_week?: number | null
+          description?: string | null
+          frequency?: string
+          id?: string
+          last_generated_at?: string | null
+          name?: string
+          next_run?: string
+          payment_method?: string | null
+          type?: Database["public"]["Enums"]["tx_type"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       transactions: {
         Row: {
           amount: number
