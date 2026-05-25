@@ -69,12 +69,17 @@ function RecurrencesPage() {
   const { data: recs, isLoading } = useQuery({
     queryKey: ["recurrences"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data: recsData, error } = await supabase
         .from("recurrences")
-        .select("*, categories(name,color)")
+        .select("*")
         .order("next_run", { ascending: true });
       if (error) throw error;
-      return (data ?? []) as Rec[];
+      const { data: catsData } = await supabase.from("categories").select("id,name,color");
+      const catMap = new Map((catsData ?? []).map((c) => [c.id, c]));
+      return (recsData ?? []).map((r) => ({
+        ...r,
+        categories: r.category_id ? (catMap.get(r.category_id) ?? null) : null,
+      })) as unknown as Rec[];
     },
   });
 
@@ -264,7 +269,7 @@ function RecurrencesPage() {
         open={open}
         onOpenChange={setOpen}
         editing={editing}
-        categories={categories ?? []}
+        categories={(categories ?? []) as Array<{ id: string; name: string; color: string }>}
         onSaved={() => qc.invalidateQueries({ queryKey: ["recurrences"] })}
       />
     </div>
