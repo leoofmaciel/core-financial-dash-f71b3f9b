@@ -342,6 +342,14 @@ function TransactionsPage() {
         </div>
       </div>
 
+      <Tabs value={filterType} onValueChange={(v) => { setFilterType(v); setPage(1); }}>
+        <TabsList>
+          <TabsTrigger value="all"><ListFilter className="h-4 w-4 mr-1" /> Todas</TabsTrigger>
+          <TabsTrigger value="entrada"><ArrowDownCircle className="h-4 w-4 mr-1 text-success" /> A receber</TabsTrigger>
+          <TabsTrigger value="saida"><ArrowUpCircle className="h-4 w-4 mr-1 text-destructive" /> A pagar</TabsTrigger>
+        </TabsList>
+      </Tabs>
+
       <Card>
         <CardContent className="p-4 space-y-3">
           <div className="flex flex-wrap gap-3 items-center">
@@ -349,14 +357,6 @@ function TransactionsPage() {
               <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
               <Input className="pl-9" placeholder="Buscar por nome ou código..." value={search} onChange={(e) => setSearch(e.target.value)} />
             </div>
-            <Select value={filterType} onValueChange={setFilterType}>
-              <SelectTrigger className="w-[140px]"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos os tipos</SelectItem>
-                <SelectItem value="entrada">Entradas</SelectItem>
-                <SelectItem value="saida">Saídas</SelectItem>
-              </SelectContent>
-            </Select>
             <Select value={filterStatus} onValueChange={setFilterStatus}>
               <SelectTrigger className="w-[140px]"><SelectValue /></SelectTrigger>
               <SelectContent>
