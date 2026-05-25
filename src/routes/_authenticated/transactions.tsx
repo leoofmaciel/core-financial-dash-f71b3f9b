@@ -207,14 +207,19 @@ function TransactionsPage() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold">Movimentações</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold">
+            {filterType === "entrada" ? "Contas a receber" : filterType === "saida" ? "Contas a pagar" : "Movimentações"}
+          </h1>
           <p className="text-sm text-muted-foreground">Controle de entradas e saídas.</p>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" onClick={exportToCSV}><FileDown className="h-4 w-4 mr-1" /> Exportar</Button>
           <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) reset(); }}>
             <DialogTrigger asChild>
-              <Button onClick={openNew}><Plus className="h-4 w-4 mr-1" /> Nova movimentação</Button>
+              <Button onClick={openNew}>
+                <Plus className="h-4 w-4 mr-1" />
+                {filterType === "entrada" ? "Nova conta a receber" : filterType === "saida" ? "Nova conta a pagar" : "Nova movimentação"}
+              </Button>
             </DialogTrigger>
             <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
               <DialogHeader><DialogTitle>{editing ? "Editar" : "Nova"} movimentação</DialogTitle></DialogHeader>
