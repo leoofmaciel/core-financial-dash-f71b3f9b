@@ -17,6 +17,7 @@ import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedUsersRouteImport } from './routes/_authenticated/users'
 import { Route as AuthenticatedTransactionsRouteImport } from './routes/_authenticated/transactions'
+import { Route as AuthenticatedTasksRouteImport } from './routes/_authenticated/tasks'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedReportsRouteImport } from './routes/_authenticated/reports'
 import { Route as AuthenticatedRecurrencesRouteImport } from './routes/_authenticated/recurrences'
@@ -72,6 +73,11 @@ const AuthenticatedTransactionsRoute =
     path: '/transactions',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedTasksRoute = AuthenticatedTasksRouteImport.update({
+  id: '/tasks',
+  path: '/tasks',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
 const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
@@ -162,6 +168,7 @@ export interface FileRoutesByFullPath {
   '/recurrences': typeof AuthenticatedRecurrencesRoute
   '/reports': typeof AuthenticatedReportsRoute
   '/settings': typeof AuthenticatedSettingsRoute
+  '/tasks': typeof AuthenticatedTasksRoute
   '/transactions': typeof AuthenticatedTransactionsRoute
   '/users': typeof AuthenticatedUsersRoute
   '/budgets/$id': typeof AuthenticatedBudgetsIdRoute
@@ -185,6 +192,7 @@ export interface FileRoutesByTo {
   '/recurrences': typeof AuthenticatedRecurrencesRoute
   '/reports': typeof AuthenticatedReportsRoute
   '/settings': typeof AuthenticatedSettingsRoute
+  '/tasks': typeof AuthenticatedTasksRoute
   '/transactions': typeof AuthenticatedTransactionsRoute
   '/users': typeof AuthenticatedUsersRoute
   '/budgets/$id': typeof AuthenticatedBudgetsIdRoute
@@ -210,6 +218,7 @@ export interface FileRoutesById {
   '/_authenticated/recurrences': typeof AuthenticatedRecurrencesRoute
   '/_authenticated/reports': typeof AuthenticatedReportsRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
+  '/_authenticated/tasks': typeof AuthenticatedTasksRoute
   '/_authenticated/transactions': typeof AuthenticatedTransactionsRoute
   '/_authenticated/users': typeof AuthenticatedUsersRoute
   '/_authenticated/budgets/$id': typeof AuthenticatedBudgetsIdRoute
@@ -235,6 +244,7 @@ export interface FileRouteTypes {
     | '/recurrences'
     | '/reports'
     | '/settings'
+    | '/tasks'
     | '/transactions'
     | '/users'
     | '/budgets/$id'
@@ -258,6 +268,7 @@ export interface FileRouteTypes {
     | '/recurrences'
     | '/reports'
     | '/settings'
+    | '/tasks'
     | '/transactions'
     | '/users'
     | '/budgets/$id'
@@ -282,6 +293,7 @@ export interface FileRouteTypes {
     | '/_authenticated/recurrences'
     | '/_authenticated/reports'
     | '/_authenticated/settings'
+    | '/_authenticated/tasks'
     | '/_authenticated/transactions'
     | '/_authenticated/users'
     | '/_authenticated/budgets/$id'
@@ -356,6 +368,13 @@ declare module '@tanstack/react-router' {
       path: '/transactions'
       fullPath: '/transactions'
       preLoaderRoute: typeof AuthenticatedTransactionsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/tasks': {
+      id: '/_authenticated/tasks'
+      path: '/tasks'
+      fullPath: '/tasks'
+      preLoaderRoute: typeof AuthenticatedTasksRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/settings': {
@@ -469,6 +488,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedRecurrencesRoute: typeof AuthenticatedRecurrencesRoute
   AuthenticatedReportsRoute: typeof AuthenticatedReportsRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
+  AuthenticatedTasksRoute: typeof AuthenticatedTasksRoute
   AuthenticatedTransactionsRoute: typeof AuthenticatedTransactionsRoute
   AuthenticatedUsersRoute: typeof AuthenticatedUsersRoute
   AuthenticatedBudgetsIdRoute: typeof AuthenticatedBudgetsIdRoute
@@ -488,6 +508,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedRecurrencesRoute: AuthenticatedRecurrencesRoute,
   AuthenticatedReportsRoute: AuthenticatedReportsRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
+  AuthenticatedTasksRoute: AuthenticatedTasksRoute,
   AuthenticatedTransactionsRoute: AuthenticatedTransactionsRoute,
   AuthenticatedUsersRoute: AuthenticatedUsersRoute,
   AuthenticatedBudgetsIdRoute: AuthenticatedBudgetsIdRoute,
@@ -512,3 +533,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
