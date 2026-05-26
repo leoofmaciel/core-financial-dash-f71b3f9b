@@ -16,6 +16,9 @@ const mainItems = [
   { title: "Orçamentos", url: "/budgets", icon: FileText },
   { title: "Movimentações", url: "/transactions", icon: ArrowRightLeft },
   { title: "Recorrências", url: "/recurrences", icon: Repeat },
+  { title: "Investimentos", url: "/investments", icon: Wallet },
+  { title: "Sócios", url: "/partners", icon: HandCoins },
+  { title: "Tarefas", url: "/tasks", icon: CheckSquare },
   { title: "Categorias", url: "/categories", icon: Tags },
   { title: "Relatórios", url: "/reports", icon: BarChart3 },
 ];
