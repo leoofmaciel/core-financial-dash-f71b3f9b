@@ -20,7 +20,9 @@ import { Route as AuthenticatedTransactionsRouteImport } from './routes/_authent
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedReportsRouteImport } from './routes/_authenticated/reports'
 import { Route as AuthenticatedRecurrencesRouteImport } from './routes/_authenticated/recurrences'
+import { Route as AuthenticatedPartnersRouteImport } from './routes/_authenticated/partners'
 import { Route as AuthenticatedLogsRouteImport } from './routes/_authenticated/logs'
+import { Route as AuthenticatedInvestmentsRouteImport } from './routes/_authenticated/investments'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedClientsRouteImport } from './routes/_authenticated/clients'
 import { Route as AuthenticatedCategoriesRouteImport } from './routes/_authenticated/categories'
@@ -86,11 +88,22 @@ const AuthenticatedRecurrencesRoute =
     path: '/recurrences',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedPartnersRoute = AuthenticatedPartnersRouteImport.update({
+  id: '/partners',
+  path: '/partners',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
 const AuthenticatedLogsRoute = AuthenticatedLogsRouteImport.update({
   id: '/logs',
   path: '/logs',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedInvestmentsRoute =
+  AuthenticatedInvestmentsRouteImport.update({
+    id: '/investments',
+    path: '/investments',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
@@ -143,7 +156,9 @@ export interface FileRoutesByFullPath {
   '/categories': typeof AuthenticatedCategoriesRoute
   '/clients': typeof AuthenticatedClientsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/investments': typeof AuthenticatedInvestmentsRoute
   '/logs': typeof AuthenticatedLogsRoute
+  '/partners': typeof AuthenticatedPartnersRoute
   '/recurrences': typeof AuthenticatedRecurrencesRoute
   '/reports': typeof AuthenticatedReportsRoute
   '/settings': typeof AuthenticatedSettingsRoute
@@ -164,7 +179,9 @@ export interface FileRoutesByTo {
   '/categories': typeof AuthenticatedCategoriesRoute
   '/clients': typeof AuthenticatedClientsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/investments': typeof AuthenticatedInvestmentsRoute
   '/logs': typeof AuthenticatedLogsRoute
+  '/partners': typeof AuthenticatedPartnersRoute
   '/recurrences': typeof AuthenticatedRecurrencesRoute
   '/reports': typeof AuthenticatedReportsRoute
   '/settings': typeof AuthenticatedSettingsRoute
@@ -187,7 +204,9 @@ export interface FileRoutesById {
   '/_authenticated/categories': typeof AuthenticatedCategoriesRoute
   '/_authenticated/clients': typeof AuthenticatedClientsRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/investments': typeof AuthenticatedInvestmentsRoute
   '/_authenticated/logs': typeof AuthenticatedLogsRoute
+  '/_authenticated/partners': typeof AuthenticatedPartnersRoute
   '/_authenticated/recurrences': typeof AuthenticatedRecurrencesRoute
   '/_authenticated/reports': typeof AuthenticatedReportsRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
@@ -210,7 +229,9 @@ export interface FileRouteTypes {
     | '/categories'
     | '/clients'
     | '/dashboard'
+    | '/investments'
     | '/logs'
+    | '/partners'
     | '/recurrences'
     | '/reports'
     | '/settings'
@@ -231,7 +252,9 @@ export interface FileRouteTypes {
     | '/categories'
     | '/clients'
     | '/dashboard'
+    | '/investments'
     | '/logs'
+    | '/partners'
     | '/recurrences'
     | '/reports'
     | '/settings'
@@ -253,7 +276,9 @@ export interface FileRouteTypes {
     | '/_authenticated/categories'
     | '/_authenticated/clients'
     | '/_authenticated/dashboard'
+    | '/_authenticated/investments'
     | '/_authenticated/logs'
+    | '/_authenticated/partners'
     | '/_authenticated/recurrences'
     | '/_authenticated/reports'
     | '/_authenticated/settings'
@@ -354,11 +379,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedRecurrencesRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/partners': {
+      id: '/_authenticated/partners'
+      path: '/partners'
+      fullPath: '/partners'
+      preLoaderRoute: typeof AuthenticatedPartnersRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/logs': {
       id: '/_authenticated/logs'
       path: '/logs'
       fullPath: '/logs'
       preLoaderRoute: typeof AuthenticatedLogsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/investments': {
+      id: '/_authenticated/investments'
+      path: '/investments'
+      fullPath: '/investments'
+      preLoaderRoute: typeof AuthenticatedInvestmentsRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/dashboard': {
@@ -424,7 +463,9 @@ interface AuthenticatedRouteChildren {
   AuthenticatedCategoriesRoute: typeof AuthenticatedCategoriesRoute
   AuthenticatedClientsRoute: typeof AuthenticatedClientsRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedInvestmentsRoute: typeof AuthenticatedInvestmentsRoute
   AuthenticatedLogsRoute: typeof AuthenticatedLogsRoute
+  AuthenticatedPartnersRoute: typeof AuthenticatedPartnersRoute
   AuthenticatedRecurrencesRoute: typeof AuthenticatedRecurrencesRoute
   AuthenticatedReportsRoute: typeof AuthenticatedReportsRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
@@ -441,7 +482,9 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedCategoriesRoute: AuthenticatedCategoriesRoute,
   AuthenticatedClientsRoute: AuthenticatedClientsRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedInvestmentsRoute: AuthenticatedInvestmentsRoute,
   AuthenticatedLogsRoute: AuthenticatedLogsRoute,
+  AuthenticatedPartnersRoute: AuthenticatedPartnersRoute,
   AuthenticatedRecurrencesRoute: AuthenticatedRecurrencesRoute,
   AuthenticatedReportsRoute: AuthenticatedReportsRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
@@ -469,3 +512,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
