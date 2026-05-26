@@ -93,6 +93,7 @@ export type Database = {
           id: string
           notes: string | null
           number: number
+          order_id: string | null
           payment_terms: string | null
           total: number
           updated_at: string
@@ -108,6 +109,7 @@ export type Database = {
           id?: string
           notes?: string | null
           number?: number
+          order_id?: string | null
           payment_terms?: string | null
           total?: number
           updated_at?: string
@@ -123,12 +125,21 @@ export type Database = {
           id?: string
           notes?: string | null
           number?: number
+          order_id?: string | null
           payment_terms?: string | null
           total?: number
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "budgets_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       categories: {
         Row: {
@@ -153,6 +164,51 @@ export type Database = {
           icon?: string | null
           id?: string
           name?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      clients: {
+        Row: {
+          address: string | null
+          cnpj: string | null
+          company: string | null
+          contact_name: string | null
+          created_at: string
+          email: string | null
+          id: string
+          name: string
+          notes: string | null
+          phone: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          address?: string | null
+          cnpj?: string | null
+          company?: string | null
+          contact_name?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          name: string
+          notes?: string | null
+          phone?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          address?: string | null
+          cnpj?: string | null
+          company?: string | null
+          contact_name?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          name?: string
+          notes?: string | null
+          phone?: string | null
+          updated_at?: string
           user_id?: string
         }
         Relationships: []
@@ -195,6 +251,144 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      order_items: {
+        Row: {
+          description: string
+          id: string
+          order_id: string
+          position: number
+          quantity: number
+          total: number
+          unit_price: number
+        }
+        Insert: {
+          description: string
+          id?: string
+          order_id: string
+          position?: number
+          quantity?: number
+          total?: number
+          unit_price?: number
+        }
+        Update: {
+          description?: string
+          id?: string
+          order_id?: string
+          position?: number
+          quantity?: number
+          total?: number
+          unit_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_items_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      order_materials: {
+        Row: {
+          created_at: string
+          description: string
+          due_date: string | null
+          id: string
+          order_id: string
+          quantity: number
+          supplier_name: string | null
+          total: number
+          transaction_id: string | null
+          unit_price: number
+        }
+        Insert: {
+          created_at?: string
+          description: string
+          due_date?: string | null
+          id?: string
+          order_id: string
+          quantity?: number
+          supplier_name?: string | null
+          total?: number
+          transaction_id?: string | null
+          unit_price?: number
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          due_date?: string | null
+          id?: string
+          order_id?: string
+          quantity?: number
+          supplier_name?: string | null
+          total?: number
+          transaction_id?: string | null
+          unit_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_materials_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      orders: {
+        Row: {
+          approved_at: string | null
+          client_id: string | null
+          created_at: string
+          delivery_time: string | null
+          id: string
+          notes: string | null
+          number: number
+          payment_terms: string | null
+          status: Database["public"]["Enums"]["order_status"]
+          total: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          approved_at?: string | null
+          client_id?: string | null
+          created_at?: string
+          delivery_time?: string | null
+          id?: string
+          notes?: string | null
+          number?: number
+          payment_terms?: string | null
+          status?: Database["public"]["Enums"]["order_status"]
+          total?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          approved_at?: string | null
+          client_id?: string | null
+          created_at?: string
+          delivery_time?: string | null
+          id?: string
+          notes?: string | null
+          number?: number
+          payment_terms?: string | null
+          status?: Database["public"]["Enums"]["order_status"]
+          total?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "orders_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
@@ -292,6 +486,7 @@ export type Database = {
           id: string
           name: string
           notes: string | null
+          order_id: string | null
           payment_method: string | null
           status: Database["public"]["Enums"]["tx_status"]
           transaction_date: string
@@ -310,6 +505,7 @@ export type Database = {
           id?: string
           name: string
           notes?: string | null
+          order_id?: string | null
           payment_method?: string | null
           status?: Database["public"]["Enums"]["tx_status"]
           transaction_date?: string
@@ -328,6 +524,7 @@ export type Database = {
           id?: string
           name?: string
           notes?: string | null
+          order_id?: string | null
           payment_method?: string | null
           status?: Database["public"]["Enums"]["tx_status"]
           transaction_date?: string
@@ -341,6 +538,13 @@ export type Database = {
             columns: ["category_id"]
             isOneToOne: false
             referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transactions_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
             referencedColumns: ["id"]
           },
         ]
@@ -382,6 +586,7 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "user"
+      order_status: "rascunho" | "orcamento" | "aprovado" | "cancelado"
       tx_status: "pago" | "pendente" | "atrasado"
       tx_type: "entrada" | "saida"
     }
@@ -512,6 +717,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "user"],
+      order_status: ["rascunho", "orcamento", "aprovado", "cancelado"],
       tx_status: ["pago", "pendente", "atrasado"],
       tx_type: ["entrada", "saida"],
     },

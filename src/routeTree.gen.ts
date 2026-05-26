@@ -22,8 +22,11 @@ import { Route as AuthenticatedReportsRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedRecurrencesRouteImport } from './routes/_authenticated/recurrences'
 import { Route as AuthenticatedLogsRouteImport } from './routes/_authenticated/logs'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedClientsRouteImport } from './routes/_authenticated/clients'
 import { Route as AuthenticatedCategoriesRouteImport } from './routes/_authenticated/categories'
+import { Route as AuthenticatedOrdersIndexRouteImport } from './routes/_authenticated/orders/index'
 import { Route as AuthenticatedBudgetsIndexRouteImport } from './routes/_authenticated/budgets/index'
+import { Route as AuthenticatedOrdersIdRouteImport } from './routes/_authenticated/orders/$id'
 import { Route as AuthenticatedBudgetsNewRouteImport } from './routes/_authenticated/budgets/new'
 import { Route as AuthenticatedBudgetsIdRouteImport } from './routes/_authenticated/budgets/$id'
 
@@ -93,17 +96,33 @@ const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedClientsRoute = AuthenticatedClientsRouteImport.update({
+  id: '/clients',
+  path: '/clients',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
 const AuthenticatedCategoriesRoute = AuthenticatedCategoriesRouteImport.update({
   id: '/categories',
   path: '/categories',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedOrdersIndexRoute =
+  AuthenticatedOrdersIndexRouteImport.update({
+    id: '/orders/',
+    path: '/orders/',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedBudgetsIndexRoute =
   AuthenticatedBudgetsIndexRouteImport.update({
     id: '/budgets/',
     path: '/budgets/',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedOrdersIdRoute = AuthenticatedOrdersIdRouteImport.update({
+  id: '/orders/$id',
+  path: '/orders/$id',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
 const AuthenticatedBudgetsNewRoute = AuthenticatedBudgetsNewRouteImport.update({
   id: '/budgets/new',
   path: '/budgets/new',
@@ -122,6 +141,7 @@ export interface FileRoutesByFullPath {
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
   '/categories': typeof AuthenticatedCategoriesRoute
+  '/clients': typeof AuthenticatedClientsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/logs': typeof AuthenticatedLogsRoute
   '/recurrences': typeof AuthenticatedRecurrencesRoute
@@ -131,7 +151,9 @@ export interface FileRoutesByFullPath {
   '/users': typeof AuthenticatedUsersRoute
   '/budgets/$id': typeof AuthenticatedBudgetsIdRoute
   '/budgets/new': typeof AuthenticatedBudgetsNewRoute
+  '/orders/$id': typeof AuthenticatedOrdersIdRoute
   '/budgets/': typeof AuthenticatedBudgetsIndexRoute
+  '/orders/': typeof AuthenticatedOrdersIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -140,6 +162,7 @@ export interface FileRoutesByTo {
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
   '/categories': typeof AuthenticatedCategoriesRoute
+  '/clients': typeof AuthenticatedClientsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/logs': typeof AuthenticatedLogsRoute
   '/recurrences': typeof AuthenticatedRecurrencesRoute
@@ -149,7 +172,9 @@ export interface FileRoutesByTo {
   '/users': typeof AuthenticatedUsersRoute
   '/budgets/$id': typeof AuthenticatedBudgetsIdRoute
   '/budgets/new': typeof AuthenticatedBudgetsNewRoute
+  '/orders/$id': typeof AuthenticatedOrdersIdRoute
   '/budgets': typeof AuthenticatedBudgetsIndexRoute
+  '/orders': typeof AuthenticatedOrdersIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -160,6 +185,7 @@ export interface FileRoutesById {
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
   '/_authenticated/categories': typeof AuthenticatedCategoriesRoute
+  '/_authenticated/clients': typeof AuthenticatedClientsRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/logs': typeof AuthenticatedLogsRoute
   '/_authenticated/recurrences': typeof AuthenticatedRecurrencesRoute
@@ -169,7 +195,9 @@ export interface FileRoutesById {
   '/_authenticated/users': typeof AuthenticatedUsersRoute
   '/_authenticated/budgets/$id': typeof AuthenticatedBudgetsIdRoute
   '/_authenticated/budgets/new': typeof AuthenticatedBudgetsNewRoute
+  '/_authenticated/orders/$id': typeof AuthenticatedOrdersIdRoute
   '/_authenticated/budgets/': typeof AuthenticatedBudgetsIndexRoute
+  '/_authenticated/orders/': typeof AuthenticatedOrdersIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -180,6 +208,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/signup'
     | '/categories'
+    | '/clients'
     | '/dashboard'
     | '/logs'
     | '/recurrences'
@@ -189,7 +218,9 @@ export interface FileRouteTypes {
     | '/users'
     | '/budgets/$id'
     | '/budgets/new'
+    | '/orders/$id'
     | '/budgets/'
+    | '/orders/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -198,6 +229,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/signup'
     | '/categories'
+    | '/clients'
     | '/dashboard'
     | '/logs'
     | '/recurrences'
@@ -207,7 +239,9 @@ export interface FileRouteTypes {
     | '/users'
     | '/budgets/$id'
     | '/budgets/new'
+    | '/orders/$id'
     | '/budgets'
+    | '/orders'
   id:
     | '__root__'
     | '/'
@@ -217,6 +251,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/signup'
     | '/_authenticated/categories'
+    | '/_authenticated/clients'
     | '/_authenticated/dashboard'
     | '/_authenticated/logs'
     | '/_authenticated/recurrences'
@@ -226,7 +261,9 @@ export interface FileRouteTypes {
     | '/_authenticated/users'
     | '/_authenticated/budgets/$id'
     | '/_authenticated/budgets/new'
+    | '/_authenticated/orders/$id'
     | '/_authenticated/budgets/'
+    | '/_authenticated/orders/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -331,6 +368,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDashboardRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/clients': {
+      id: '/_authenticated/clients'
+      path: '/clients'
+      fullPath: '/clients'
+      preLoaderRoute: typeof AuthenticatedClientsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/categories': {
       id: '/_authenticated/categories'
       path: '/categories'
@@ -338,11 +382,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedCategoriesRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/orders/': {
+      id: '/_authenticated/orders/'
+      path: '/orders'
+      fullPath: '/orders/'
+      preLoaderRoute: typeof AuthenticatedOrdersIndexRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/budgets/': {
       id: '/_authenticated/budgets/'
       path: '/budgets'
       fullPath: '/budgets/'
       preLoaderRoute: typeof AuthenticatedBudgetsIndexRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/orders/$id': {
+      id: '/_authenticated/orders/$id'
+      path: '/orders/$id'
+      fullPath: '/orders/$id'
+      preLoaderRoute: typeof AuthenticatedOrdersIdRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/budgets/new': {
@@ -364,6 +422,7 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedRouteChildren {
   AuthenticatedCategoriesRoute: typeof AuthenticatedCategoriesRoute
+  AuthenticatedClientsRoute: typeof AuthenticatedClientsRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedLogsRoute: typeof AuthenticatedLogsRoute
   AuthenticatedRecurrencesRoute: typeof AuthenticatedRecurrencesRoute
@@ -373,11 +432,14 @@ interface AuthenticatedRouteChildren {
   AuthenticatedUsersRoute: typeof AuthenticatedUsersRoute
   AuthenticatedBudgetsIdRoute: typeof AuthenticatedBudgetsIdRoute
   AuthenticatedBudgetsNewRoute: typeof AuthenticatedBudgetsNewRoute
+  AuthenticatedOrdersIdRoute: typeof AuthenticatedOrdersIdRoute
   AuthenticatedBudgetsIndexRoute: typeof AuthenticatedBudgetsIndexRoute
+  AuthenticatedOrdersIndexRoute: typeof AuthenticatedOrdersIndexRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedCategoriesRoute: AuthenticatedCategoriesRoute,
+  AuthenticatedClientsRoute: AuthenticatedClientsRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedLogsRoute: AuthenticatedLogsRoute,
   AuthenticatedRecurrencesRoute: AuthenticatedRecurrencesRoute,
@@ -387,7 +449,9 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedUsersRoute: AuthenticatedUsersRoute,
   AuthenticatedBudgetsIdRoute: AuthenticatedBudgetsIdRoute,
   AuthenticatedBudgetsNewRoute: AuthenticatedBudgetsNewRoute,
+  AuthenticatedOrdersIdRoute: AuthenticatedOrdersIdRoute,
   AuthenticatedBudgetsIndexRoute: AuthenticatedBudgetsIndexRoute,
+  AuthenticatedOrdersIndexRoute: AuthenticatedOrdersIndexRoute,
 }
 
 const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
@@ -405,13 +469,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
