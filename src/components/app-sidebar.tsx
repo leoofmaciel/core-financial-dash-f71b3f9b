@@ -11,10 +11,12 @@ import { Button } from "@/components/ui/button";
 
 const mainItems = [
   { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
+  { title: "Clientes", url: "/clients", icon: UserCircle },
+  { title: "Pedidos", url: "/orders", icon: ClipboardList },
+  { title: "Orçamentos", url: "/budgets", icon: FileText },
   { title: "Movimentações", url: "/transactions", icon: ArrowRightLeft },
   { title: "Recorrências", url: "/recurrences", icon: Repeat },
   { title: "Categorias", url: "/categories", icon: Tags },
-  { title: "Orçamentos", url: "/budgets", icon: FileText },
   { title: "Relatórios", url: "/reports", icon: BarChart3 },
 ];
 
