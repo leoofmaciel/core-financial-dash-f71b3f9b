@@ -127,7 +127,7 @@ function InvestmentsPage() {
         const item = RM_INVESTMENTS[i];
         const { data: inv, error } = await supabase.from("investments").insert({ description: item.description, amount: item.amount, status: item.status, position: i, user_id: user.id }).select().single();
         if (error) throw error;
-        const rows = Object.entries(item.payments).filter(([, v]) => v > 0).map(([name, amount]) => ({ investment_id: inv.id, partner_id: partnerMap[name], amount }));
+        const rows = (Object.entries(item.payments) as [string, number][]).filter(([, v]) => v > 0).map(([name, amount]) => ({ investment_id: inv.id as string, partner_id: partnerMap[name], amount: Number(amount) }));
         if (rows.length) await supabase.from("investment_payments").insert(rows);
       }
       // Recorrências + transações pendentes
