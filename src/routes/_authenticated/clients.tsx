@@ -22,7 +22,7 @@ type ClientRow = {
   contact_name: string | null; notes: string | null;
 };
 
-const empty: Omit<ClientRow, "id"> = { name: "", company: "", cnpj: "", email: "", phone: "", address: "", contact_name: "", notes: "" };
+const empty = { name: "", company: "", cnpj: "", email: "", phone: "", address: "", contact_name: "", notes: "" };
 
 function ClientsPage() {
   const qc = useQueryClient();
