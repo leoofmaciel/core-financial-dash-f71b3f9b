@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { LayoutDashboard, ArrowRightLeft, Tags, FileText, BarChart3, Settings, Users, LogOut, History, Repeat } from "lucide-react";
+import { LayoutDashboard, ArrowRightLeft, Tags, FileText, BarChart3, Settings, Users, LogOut, History, Repeat, UserCircle, ClipboardList } from "lucide-react";
 import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel,
   SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarHeader, SidebarFooter, useSidebar,
@@ -11,10 +11,12 @@ import { Button } from "@/components/ui/button";
 
 const mainItems = [
   { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
+  { title: "Clientes", url: "/clients", icon: UserCircle },
+  { title: "Pedidos", url: "/orders", icon: ClipboardList },
+  { title: "Orçamentos", url: "/budgets", icon: FileText },
   { title: "Movimentações", url: "/transactions", icon: ArrowRightLeft },
   { title: "Recorrências", url: "/recurrences", icon: Repeat },
   { title: "Categorias", url: "/categories", icon: Tags },
-  { title: "Orçamentos", url: "/budgets", icon: FileText },
   { title: "Relatórios", url: "/reports", icon: BarChart3 },
 ];
 
