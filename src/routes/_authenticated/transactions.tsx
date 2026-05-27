@@ -14,7 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Plus, Pencil, Trash2, Search, Paperclip, Upload, X, FileDown, Filter, ArrowDownCircle, ArrowUpCircle, ListFilter } from "lucide-react";
+import { Plus, Pencil, Trash2, Search, Paperclip, Upload, X, FileDown, Filter, ArrowDownCircle, ArrowUpCircle, ListFilter, CheckCircle2, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 import { formatBRL, formatDate } from "@/lib/format";
 import { logActivity } from "@/lib/logs";
@@ -167,6 +167,17 @@ function TransactionsPage() {
     if (t.attachment_url) await supabase.storage.from("attachments").remove([t.attachment_url]);
     await logActivity("delete", "transaction", t.id, { name: t.name });
     toast.success("Excluído");
+    qc.invalidateQueries({ queryKey: ["transactions"] });
+    qc.invalidateQueries({ queryKey: ["dashboard"] });
+    qc.invalidateQueries({ queryKey: ["notifications"] });
+  };
+
+  const toggleStatus = async (t: Tx) => {
+    const newStatus = t.status === "pago" ? "pendente" : "pago";
+    const { error } = await supabase.from("transactions").update({ status: newStatus }).eq("id", t.id);
+    if (error) return toast.error(error.message);
+    await logActivity("update", "transaction", t.id, { status: newStatus });
+    toast.success(newStatus === "pago" ? "Marcado como pago" : "Marcado como pendente");
     qc.invalidateQueries({ queryKey: ["transactions"] });
     qc.invalidateQueries({ queryKey: ["dashboard"] });
     qc.invalidateQueries({ queryKey: ["notifications"] });
@@ -437,6 +448,16 @@ function TransactionsPage() {
                   </TableCell>
                   <TableCell>
                     <div className="flex gap-1 justify-end">
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        onClick={() => toggleStatus(t)}
+                        title={t.status === "pago" ? "Marcar como pendente" : "Marcar como pago"}
+                      >
+                        {t.status === "pago"
+                          ? <RotateCcw className="h-4 w-4 text-muted-foreground" />
+                          : <CheckCircle2 className="h-4 w-4 text-success" />}
+                      </Button>
                       <Button size="icon" variant="ghost" onClick={() => openEdit(t)}><Pencil className="h-4 w-4" /></Button>
                       <AlertDialog>
                         <AlertDialogTrigger asChild><Button size="icon" variant="ghost"><Trash2 className="h-4 w-4 text-destructive" /></Button></AlertDialogTrigger>
