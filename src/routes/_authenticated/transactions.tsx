@@ -448,6 +448,16 @@ function TransactionsPage() {
                   </TableCell>
                   <TableCell>
                     <div className="flex gap-1 justify-end">
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        onClick={() => toggleStatus(t)}
+                        title={t.status === "pago" ? "Marcar como pendente" : "Marcar como pago"}
+                      >
+                        {t.status === "pago"
+                          ? <RotateCcw className="h-4 w-4 text-muted-foreground" />
+                          : <CheckCircle2 className="h-4 w-4 text-success" />}
+                      </Button>
                       <Button size="icon" variant="ghost" onClick={() => openEdit(t)}><Pencil className="h-4 w-4" /></Button>
                       <AlertDialog>
                         <AlertDialogTrigger asChild><Button size="icon" variant="ghost"><Trash2 className="h-4 w-4 text-destructive" /></Button></AlertDialogTrigger>
