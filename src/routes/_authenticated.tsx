@@ -8,6 +8,7 @@ import { GlobalSearch } from "@/components/global-search";
 import { NotificationsBell } from "@/components/notifications-bell";
 import { useAuth } from "@/hooks/use-auth";
 import { Loader2 } from "lucide-react";
+import { Copilot } from "@/components/copilot";
 
 export const Route = createFileRoute("/_authenticated")({
   beforeLoad: async () => {
@@ -50,6 +51,7 @@ function AuthenticatedLayout() {
           <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-x-hidden">
             <Outlet />
           </main>
+          <Copilot />
         </div>
       </div>
     </SidebarProvider>
