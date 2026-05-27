@@ -172,6 +172,17 @@ function TransactionsPage() {
     qc.invalidateQueries({ queryKey: ["notifications"] });
   };
 
+  const toggleStatus = async (t: Tx) => {
+    const newStatus = t.status === "pago" ? "pendente" : "pago";
+    const { error } = await supabase.from("transactions").update({ status: newStatus }).eq("id", t.id);
+    if (error) return toast.error(error.message);
+    await logActivity("update", "transaction", t.id, { status: newStatus });
+    toast.success(newStatus === "pago" ? "Marcado como pago" : "Marcado como pendente");
+    qc.invalidateQueries({ queryKey: ["transactions"] });
+    qc.invalidateQueries({ queryKey: ["dashboard"] });
+    qc.invalidateQueries({ queryKey: ["notifications"] });
+  };
+
   const filtered = txs.filter((t) => {
     if (search && !t.name.toLowerCase().includes(search.toLowerCase()) && !String(t.code).includes(search)) return false;
     if (filterType !== "all" && t.type !== filterType) return false;
