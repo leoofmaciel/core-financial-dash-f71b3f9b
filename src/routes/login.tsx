@@ -80,10 +80,10 @@ function LoginPage() {
             </Button>
           </form>
 
-          <p className="mt-6 text-sm text-center text-muted-foreground">
-            Não tem conta?{" "}
-            <Link to="/signup" className="text-primary font-medium hover:underline">Criar conta</Link>
+          <p className="mt-6 text-xs text-center text-muted-foreground">
+            Acesso restrito. Solicite uma conta ao administrador.
           </p>
+
         </div>
       </div>
     </div>
