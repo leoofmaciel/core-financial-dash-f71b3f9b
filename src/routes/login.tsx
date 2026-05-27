@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import logo from "@/assets/logo.png";
 import { Loader2 } from "lucide-react";
 
+
 export const Route = createFileRoute("/login")({
   beforeLoad: async () => {
     if (typeof window === "undefined") return;
