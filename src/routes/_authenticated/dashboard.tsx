@@ -31,7 +31,7 @@ function Dashboard() {
   const prevMonthTxs = (data ?? []).filter((t) => inMonth(t, prevMonthRef));
 
   const sum = (arr: any[], kind: string) =>
-    arr.filter((t) => t.type === kind).reduce((s, t) => s + Number(t.amount), 0);
+    arr.filter((t) => t.type === kind && t.status === "pago").reduce((s, t) => s + Number(t.amount), 0);
 
   const entradas = sum(monthTxs, "entrada");
   const saidas = sum(monthTxs, "saida");
