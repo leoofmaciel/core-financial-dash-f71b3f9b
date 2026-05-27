@@ -14,7 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Plus, Pencil, Trash2, Search, Paperclip, Upload, X, FileDown, Filter, ArrowDownCircle, ArrowUpCircle, ListFilter } from "lucide-react";
+import { Plus, Pencil, Trash2, Search, Paperclip, Upload, X, FileDown, Filter, ArrowDownCircle, ArrowUpCircle, ListFilter, CheckCircle2, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 import { formatBRL, formatDate } from "@/lib/format";
 import { logActivity } from "@/lib/logs";
