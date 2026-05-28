@@ -53,7 +53,9 @@ export async function generateBudgetPDF(budget: BudgetData, company: CompanyData
   let logoOffset = 0;
   if (company.logo_url) {
     try {
-      const img = await fetch(company.logo_url).then((r) => r.blob()).then(blobToDataURL);
+      // Add cache-busting to avoid stale CDN-cached images
+      const logoUrlWithBust = `${company.logo_url}?t=${Date.now()}`;
+      const img = await fetch(logoUrlWithBust, { cache: "no-store" }).then((r) => r.blob()).then(blobToDataURL);
       const ext = (company.logo_url.split(".").pop() || "png").toLowerCase();
       const fmt = ext === "jpg" || ext === "jpeg" ? "JPEG" : "PNG";
       doc.addImage(img, fmt, margin, 8, 24, 24);
