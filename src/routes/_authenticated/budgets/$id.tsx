@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, Trash2, FileDown, Save } from "lucide-react";
+import { Plus, Trash2, FileDown, Save, Mail } from "lucide-react";
 import { formatBRL } from "@/lib/format";
 import { toast } from "sonner";
 import { generateBudgetPDF } from "@/lib/pdf";
@@ -26,6 +26,7 @@ function BudgetEditor() {
     delivery_time: "", payment_terms: "", notes: "",
   });
   const [items, setItems] = useState<Item[]>([{ description: "", quantity: 1, unit_price: 0, total: 0 }]);
+  const [sendingEmail, setSendingEmail] = useState(false);
 
   useEffect(() => {
     if (isNew) return;
@@ -51,7 +52,7 @@ function BudgetEditor() {
     }));
   };
 
-  const save = async (then?: "pdf" | "back") => {
+  const save = async (then?: "pdf" | "back" | "email") => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
     if (!budget.client_name) return toast.error("Nome do cliente é obrigatório");
@@ -80,10 +81,44 @@ function BudgetEditor() {
     await logActivity(isNew ? "create" : "update", "budget", budgetId!, { client: budget.client_name, total });
     toast.success("Orçamento salvo");
 
-    if (then === "pdf") {
+    if (then === "pdf" || then === "email") {
       const { data: company } = await supabase.from("company_settings").select("*").eq("user_id", user.id).maybeSingle();
       const { data: b } = await supabase.from("budgets").select("*").eq("id", budgetId!).single();
-      await generateBudgetPDF({ ...b!, items: rows } as any, company ?? {});
+      
+      if (then === "pdf") {
+        await generateBudgetPDF({ ...b!, items: rows } as any, company ?? {});
+      } else if (then === "email") {
+        setSendingEmail(true);
+        try {
+          const accessToken = localStorage.getItem("gmail_access_token");
+          if (!accessToken) {
+            toast.error("Você precisa conectar seu Gmail nas Configurações primeiro.");
+            setSendingEmail(false);
+            return;
+          }
+          if (!budget.client_email) {
+            toast.error("O e-mail do cliente não foi preenchido.");
+            setSendingEmail(false);
+            return;
+          }
+          
+          const doc = await generateBudgetPDF({ ...b!, items: rows } as any, company ?? {}, true);
+          const pdfDataUrl = doc.output("datauristring");
+          
+          const { sendGmail } = await import("@/lib/gmail");
+          await sendGmail(
+            accessToken,
+            budget.client_email,
+            `Orçamento #${String(budget.number ?? b!.number).padStart(5, "0")} - ${company?.company_name || "Nossa Empresa"}`,
+            `Olá ${budget.client_name},\n\nSegue em anexo o orçamento solicitado.\n\nAtenciosamente,\n${company?.company_name || "Nossa Empresa"}`,
+            [{ name: `Orcamento-${String(budget.number ?? b!.number).padStart(5, "0")}.pdf`, dataUrl: pdfDataUrl }]
+          );
+          toast.success("E-mail enviado com sucesso!");
+        } catch (error: any) {
+          toast.error("Erro ao enviar e-mail: " + error.message);
+        }
+        setSendingEmail(false);
+      }
     }
     if (then === "back" || isNew) navigate({ to: "/budgets" });
   };
@@ -100,6 +135,9 @@ function BudgetEditor() {
         <div className="flex gap-2">
           <Button variant="outline" onClick={() => save("back")}><Save className="h-4 w-4 mr-1" /> Salvar</Button>
           <Button onClick={() => save("pdf")}><FileDown className="h-4 w-4 mr-1" /> Salvar e baixar PDF</Button>
+          <Button variant="secondary" onClick={() => save("email")} disabled={sendingEmail}>
+            <Mail className="h-4 w-4 mr-1" /> {sendingEmail ? "Enviando..." : "Enviar por E-mail"}
+          </Button>
         </div>
       </div>
 

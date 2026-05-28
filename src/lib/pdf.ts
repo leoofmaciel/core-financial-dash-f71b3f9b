@@ -33,7 +33,7 @@ const GRAY_BORDER: [number, number, number] = [229, 231, 235]; // #e5e7eb
 const TEXT: [number, number, number] = [31, 41, 55];     // #1f2937
 const MUTED: [number, number, number] = [107, 114, 128]; // #6b7280
 
-export async function generateBudgetPDF(budget: BudgetData, company: CompanyData) {
+export async function generateBudgetPDF(budget: BudgetData, company: CompanyData, returnDoc?: boolean) {
   const doc = new jsPDF();
   const pageW = doc.internal.pageSize.getWidth();
   const pageH = doc.internal.pageSize.getHeight();
@@ -263,6 +263,7 @@ export async function generateBudgetPDF(budget: BudgetData, company: CompanyData
   ].filter(Boolean).join("  •  ");
   doc.text(footerText, pageW / 2, pageH - 5, { align: "center" });
 
+  if (returnDoc) return doc;
   doc.save(`Orcamento-${String(budget.number).padStart(5, "0")}.pdf`);
 }
 

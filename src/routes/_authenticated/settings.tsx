@@ -6,13 +6,16 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
-import { Upload } from "lucide-react";
+import { Upload, Mail } from "lucide-react";
+import { useGoogleLogin } from "@react-oauth/google";
 
 export const Route = createFileRoute("/_authenticated/settings")({ component: SettingsPage });
 
 function SettingsPage() {
   const [form, setForm] = useState<any>({ company_name: "", cnpj: "", address: "", phone: "", email: "", logo_url: "" });
   const [uploading, setUploading] = useState(false);
+  const [googleClientId, setGoogleClientId] = useState(() => typeof window !== "undefined" ? localStorage.getItem("google_client_id") || "" : "");
+  const [gmailToken, setGmailToken] = useState(() => typeof window !== "undefined" ? localStorage.getItem("gmail_access_token") || "" : "");
 
   useEffect(() => {
     (async () => {
@@ -30,7 +33,33 @@ function SettingsPage() {
     delete payload.id; delete payload.created_at; delete payload.updated_at;
     const { error } = await supabase.from("company_settings").upsert(payload, { onConflict: "user_id" });
     if (error) return toast.error(error.message);
+    
+    const currentClientId = localStorage.getItem("google_client_id") || "";
+    if (googleClientId !== currentClientId) {
+      localStorage.setItem("google_client_id", googleClientId);
+      toast.success("Configurações salvas! Recarregando para aplicar integração...");
+      setTimeout(() => window.location.reload(), 1000);
+      return;
+    }
+    
     toast.success("Configurações salvas");
+  };
+
+  // Google Login hook handles the popup flow
+  const loginWithGoogle = useGoogleLogin({
+    onSuccess: (tokenResponse) => {
+      localStorage.setItem("gmail_access_token", tokenResponse.access_token);
+      setGmailToken(tokenResponse.access_token);
+      toast.success("Conectado ao Gmail com sucesso!");
+    },
+    onError: (error) => toast.error("Erro ao conectar ao Google: " + error),
+    scope: "https://www.googleapis.com/auth/gmail.send",
+  });
+
+  const disconnectGmail = () => {
+    localStorage.removeItem("gmail_access_token");
+    setGmailToken("");
+    toast.success("Desconectado do Gmail");
   };
 
   const uploadLogo = async (file: File) => {
@@ -78,6 +107,41 @@ function SettingsPage() {
           <div className="space-y-2 sm:col-span-2"><Label>Endereço</Label><Input value={form.address || ""} onChange={(e) => setForm({ ...form, address: e.target.value })} /></div>
           <div className="space-y-2"><Label>Telefone</Label><Input value={form.phone || ""} onChange={(e) => setForm({ ...form, phone: e.target.value })} /></div>
           <div className="space-y-2"><Label>E-mail</Label><Input type="email" value={form.email || ""} onChange={(e) => setForm({ ...form, email: e.target.value })} /></div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader><CardTitle>Integração com Gmail</CardTitle></CardHeader>
+        <CardContent className="space-y-4">
+          <p className="text-sm text-muted-foreground">
+            Para enviar e-mails diretamente do sistema, você precisa criar um projeto no Google Cloud e gerar um <strong>Client ID</strong> com acesso à API do Gmail.
+          </p>
+          <div className="space-y-2">
+            <Label>Google Client ID</Label>
+            <Input 
+              placeholder="Ex: 123456789-abcdef.apps.googleusercontent.com" 
+              value={googleClientId} 
+              onChange={(e) => setGoogleClientId(e.target.value)} 
+            />
+            <p className="text-xs text-muted-foreground">Salve as configurações da página antes de conectar.</p>
+          </div>
+          
+          {googleClientId && (
+            <div className="pt-2 flex items-center gap-3">
+              {gmailToken ? (
+                <>
+                  <div className="flex items-center text-sm font-medium text-green-600 bg-green-50 px-3 py-1.5 rounded-md border border-green-200">
+                    <Mail className="h-4 w-4 mr-2" /> Gmail Conectado
+                  </div>
+                  <Button variant="outline" size="sm" onClick={disconnectGmail}>Desconectar</Button>
+                </>
+              ) : (
+                <Button variant="outline" onClick={() => loginWithGoogle()}>
+                  <Mail className="h-4 w-4 mr-2" /> Conectar Gmail
+                </Button>
+              )}
+            </div>
+          )}
         </CardContent>
       </Card>
 
