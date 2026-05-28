@@ -37,8 +37,8 @@ function CategoriesPage() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
     const res = editing
-      ? await supabase.from("categories").update({ name, color, type }).eq("id", editing.id).select().single()
-      : await supabase.from("categories").insert({ user_id: user.id, name, color, type }).select().single();
+      ? await supabase.from("categories").update({ name, color, icon: type }).eq("id", editing.id).select().single()
+      : await supabase.from("categories").insert({ user_id: user.id, name, color, icon: type }).select().single();
     if (res.error) return toast.error(res.error.message);
     await logActivity(editing ? "update" : "create", "category", res.data?.id, { name, type });
     toast.success(editing ? "Atualizado" : "Criado");
@@ -49,7 +49,7 @@ function CategoriesPage() {
   const seedDefaults = async () => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
-    const rows = defaults.map((n) => ({ user_id: user.id, name: n, color: "#1e40af", type: "saida" as "saida" }));
+    const rows = defaults.map((n) => ({ user_id: user.id, name: n, color: "#1e40af", icon: "saida" }));
     const { error } = await supabase.from("categories").insert(rows);
     if (error) return toast.error(error.message);
     toast.success("Categorias padrão criadas");
@@ -109,10 +109,10 @@ function CategoriesPage() {
               <div className="flex items-center gap-3 min-w-0">
                 <span className="h-8 w-8 rounded-lg" style={{ background: c.color }} />
                 <span className="font-medium truncate">{c.name}</span>
-                {c.type === "entrada" ? <ArrowUpCircle className="h-4 w-4 text-green-500" /> : <ArrowDownCircle className="h-4 w-4 text-red-500" />}
+                {c.icon === "entrada" ? <ArrowUpCircle className="h-4 w-4 text-green-500" /> : <ArrowDownCircle className="h-4 w-4 text-red-500" />}
               </div>
               <div className="flex gap-1">
-                <Button size="icon" variant="ghost" onClick={() => { setEditing(c); setName(c.name); setColor(c.color || "#1e40af"); setType(c.type || "saida"); setOpen(true); }}><Pencil className="h-4 w-4" /></Button>
+                <Button size="icon" variant="ghost" onClick={() => { setEditing(c); setName(c.name); setColor(c.color || "#1e40af"); setType((c.icon as "entrada" | "saida") || "saida"); setOpen(true); }}><Pencil className="h-4 w-4" /></Button>
                 <AlertDialog>
                   <AlertDialogTrigger asChild><Button size="icon" variant="ghost"><Trash2 className="h-4 w-4 text-destructive" /></Button></AlertDialogTrigger>
                   <AlertDialogContent>

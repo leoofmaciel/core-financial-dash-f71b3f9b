@@ -216,7 +216,7 @@ export function Copilot() {
       
       setLoading(true);
       const currentType = draftTx.type || "saida";
-      const { data } = await supabase.from("categories").select("*").eq("type", currentType).order("name");
+      const { data } = await supabase.from("categories").select("*").eq("icon", currentType).order("name");
       setLoading(false);
       
       const opts = (data || []).map((c: any) => ({ label: c.name, action: "SELECT_TX_CATEGORY", data: c.id }));
@@ -234,7 +234,7 @@ export function Copilot() {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) throw new Error("Sem usuário");
         const { data: newCat, error } = await supabase.from("categories").insert({
-          user_id: user.id, name: capText, color: "#3b82f6", type: draftTx.type || "saida"
+          user_id: user.id, name: capText, color: "#3b82f6", icon: draftTx.type || "saida"
         }).select().single();
         if (error) throw error;
         

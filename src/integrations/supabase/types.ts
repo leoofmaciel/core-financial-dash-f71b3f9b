@@ -149,7 +149,6 @@ export type Database = {
           id: string
           name: string
           user_id: string
-          type: "entrada" | "saida" | null
         }
         Insert: {
           color?: string | null
@@ -158,7 +157,6 @@ export type Database = {
           id?: string
           name: string
           user_id: string
-          type?: "entrada" | "saida" | null
         }
         Update: {
           color?: string | null
@@ -167,7 +165,6 @@ export type Database = {
           id?: string
           name?: string
           user_id?: string
-          type?: "entrada" | "saida" | null
         }
         Relationships: []
       }
