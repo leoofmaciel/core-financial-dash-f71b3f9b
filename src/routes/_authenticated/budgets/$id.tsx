@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Plus, Trash2, FileDown, Save, Mail, Link as LinkIcon } from "lucide-react";
+import { MessageCircle } from "lucide-react";
 import { formatBRL } from "@/lib/format";
 import { toast } from "sonner";
 import { generateBudgetPDF } from "@/lib/pdf";
@@ -52,7 +53,7 @@ function BudgetEditor() {
     }));
   };
 
-  const save = async (then?: "pdf" | "back" | "email" | "link") => {
+  const save = async (then?: "pdf" | "back" | "email" | "link" | "whatsapp") => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
     if (!budget.client_name) return toast.error("Nome do cliente é obrigatório");
@@ -81,7 +82,7 @@ function BudgetEditor() {
     await logActivity(isNew ? "create" : "update", "budget", budgetId!, { client: budget.client_name, total });
     toast.success("Orçamento salvo");
 
-    if (then === "pdf" || then === "email" || then === "link") {
+    if (then === "pdf" || then === "email" || then === "link" || then === "whatsapp") {
       const { data: company } = await supabase.from("company_settings").select("*").eq("user_id", user.id).maybeSingle();
       const { data: b } = await supabase.from("budgets").select("*").eq("id", budgetId!).single();
       
@@ -137,6 +138,36 @@ function BudgetEditor() {
           toast.error("Erro ao gerar link: " + error.message);
         }
         setIsProcessing(false);
+      } else if (then === "whatsapp") {
+        setIsProcessing(true);
+        try {
+          const doc = await generateBudgetPDF({ ...b!, items: rows } as any, company ?? {}, true);
+          const blob = doc.output("blob");
+          const fileName = `${user.id}/orcamento-${String(budget.number ?? b!.number).padStart(5, "0")}-${Date.now()}.pdf`;
+          
+          const { error: uploadError } = await supabase.storage.from("attachments").upload(fileName, blob, { contentType: "application/pdf", upsert: true });
+          if (uploadError) throw uploadError;
+          
+          const { data } = await supabase.storage.from("attachments").createSignedUrl(fileName, 60 * 60 * 24 * 30); // 30 dias
+          if (!data?.signedUrl) throw new Error("Não foi possível gerar a URL");
+          
+          let text = `Olá ${budget.client_name}, tudo bem?\nSegue o link para o orçamento solicitado:\n\n📄 *Orçamento Nº ${String(budget.number ?? b!.number).padStart(5, "0")}*\nValor Total: ${formatBRL(total)}\n\nAcesse o PDF aqui: ${data.signedUrl}\n\nQualquer dúvida, estou à disposição!`;
+          
+          let phoneStr = budget.client_phone ? budget.client_phone.replace(/\D/g, '') : '';
+          if (phoneStr && phoneStr.length >= 10 && !phoneStr.startsWith('55')) {
+             phoneStr = '55' + phoneStr;
+          }
+          
+          const waUrl = phoneStr 
+            ? `https://wa.me/${phoneStr}?text=${encodeURIComponent(text)}`
+            : `https://wa.me/?text=${encodeURIComponent(text)}`;
+            
+          window.open(waUrl, '_blank');
+          toast.success("Redirecionando para o WhatsApp...");
+        } catch (error: any) {
+          toast.error("Erro ao gerar link para WhatsApp: " + error.message);
+        }
+        setIsProcessing(false);
       }
     }
     if (then === "back" || isNew) navigate({ to: "/budgets" });
@@ -159,6 +190,9 @@ function BudgetEditor() {
           </Button>
           <Button variant="secondary" onClick={() => save("email")} disabled={isProcessing}>
             <Mail className="h-4 w-4 mr-1" /> E-mail
+          </Button>
+          <Button className="bg-green-600 hover:bg-green-700 text-white" onClick={() => save("whatsapp")} disabled={isProcessing}>
+            <MessageCircle className="h-4 w-4 mr-1" /> WhatsApp
           </Button>
         </div>
       </div>

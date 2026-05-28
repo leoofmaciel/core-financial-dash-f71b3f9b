@@ -135,7 +135,7 @@ function SettingsPage() {
           
           {googleClientId && (
             <div className="pt-2 flex items-center gap-3">
-              <GoogleOAuthProvider clientId={googleClientId}>
+              <GoogleOAuthProvider clientId={googleClientId.trim()}>
                 <GoogleConnectButton 
                   connected={!!gmailToken}
                   onConnect={(token) => {

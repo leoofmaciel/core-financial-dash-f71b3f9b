@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Trash2, FileDown, Save, CheckCircle2, ArrowDownCircle, FileText } from "lucide-react";
+import { Plus, Trash2, FileDown, Save, CheckCircle2, ArrowDownCircle, FileText, MessageCircle } from "lucide-react";
 import { formatBRL, formatDate } from "@/lib/format";
 import { toast } from "sonner";
 import { generateBudgetPDF } from "@/lib/pdf";
@@ -153,6 +153,76 @@ function OrderEditor() {
     toast.success("Orçamento gerado e PDF baixado");
   };
 
+  const sendWhatsApp = async () => {
+    const orderId = await saveOrder(true);
+    if (!orderId || !selectedClient) return;
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    let bId = budgetId;
+    const budgetPayload = {
+      user_id: user.id,
+      order_id: orderId,
+      client_name: selectedClient.name,
+      client_company: selectedClient.company,
+      client_phone: selectedClient.phone,
+      client_email: selectedClient.email,
+      delivery_time: order.delivery_time,
+      payment_terms: order.payment_terms,
+      notes: order.notes,
+      total,
+    };
+    if (bId) {
+      await supabase.from("budgets").update(budgetPayload).eq("id", bId);
+      await supabase.from("budget_items").delete().eq("budget_id", bId);
+    } else {
+      const { data, error } = await supabase.from("budgets").insert(budgetPayload).select().single();
+      if (error) return toast.error(error.message);
+      bId = data.id;
+      setBudgetId(bId);
+    }
+    const bi = items.filter((i) => i.description).map((i, idx) => ({
+      budget_id: bId!, description: i.description, quantity: Number(i.quantity),
+      unit_price: Number(i.unit_price), total: Number(i.total), position: idx,
+    }));
+    if (bi.length) await supabase.from("budget_items").insert(bi);
+
+    await supabase.from("orders").update({ status: "orcamento" }).eq("id", orderId);
+    setOrder((o: any) => ({ ...o, status: "orcamento" }));
+
+    const { data: company } = await supabase.from("company_settings").select("*").eq("user_id", user.id).maybeSingle();
+    const { data: b } = await supabase.from("budgets").select("*").eq("id", bId!).single();
+
+    toast.info("Gerando link do WhatsApp...");
+    try {
+      const doc = await generateBudgetPDF({ ...b!, items: bi } as any, company ?? {}, true);
+      const blob = doc.output("blob");
+      const fileName = `${user.id}/orcamento-${String(b!.number).padStart(5, "0")}-${Date.now()}.pdf`;
+      
+      const { error: uploadError } = await supabase.storage.from("attachments").upload(fileName, blob, { contentType: "application/pdf", upsert: true });
+      if (uploadError) throw uploadError;
+      
+      const { data } = await supabase.storage.from("attachments").createSignedUrl(fileName, 60 * 60 * 24 * 30);
+      if (!data?.signedUrl) throw new Error("Não foi possível gerar a URL");
+      
+      let text = `Olá ${selectedClient.name}, tudo bem?\nSegue o link para o orçamento solicitado referente ao Pedido #${String(order.number ?? "").padStart(5, "0")}:\n\n📄 *Orçamento Nº ${String(b!.number).padStart(5, "0")}*\nValor Total: ${formatBRL(total)}\n\nAcesse o PDF aqui: ${data.signedUrl}\n\nQualquer dúvida, estou à disposição!`;
+      
+      let phoneStr = selectedClient.phone ? selectedClient.phone.replace(/\D/g, '') : '';
+      if (phoneStr && phoneStr.length >= 10 && !phoneStr.startsWith('55')) {
+         phoneStr = '55' + phoneStr;
+      }
+      
+      const waUrl = phoneStr 
+        ? `https://wa.me/${phoneStr}?text=${encodeURIComponent(text)}`
+        : `https://wa.me/?text=${encodeURIComponent(text)}`;
+        
+      window.open(waUrl, '_blank');
+      toast.success("Redirecionando para o WhatsApp...");
+    } catch (error: any) {
+      toast.error("Erro ao gerar link para WhatsApp: " + error.message);
+    }
+  };
+
   const approveOrder = async () => {
     const orderId = await saveOrder(true);
     if (!orderId || !selectedClient) return;
@@ -258,7 +328,10 @@ function OrderEditor() {
         <div className="flex gap-2 flex-wrap">
           <Button variant="outline" onClick={() => saveOrder()}><Save className="h-4 w-4 mr-1" /> Salvar</Button>
           <Button variant="secondary" onClick={generateBudget} disabled={order.status === "aprovado"}>
-            <FileText className="h-4 w-4 mr-1" /> Gerar orçamento (PDF)
+            <FileText className="h-4 w-4 mr-1" /> PDF do Orçamento
+          </Button>
+          <Button className="bg-green-600 hover:bg-green-700 text-white" onClick={sendWhatsApp} disabled={order.status === "aprovado"}>
+            <MessageCircle className="h-4 w-4 mr-1" /> WhatsApp
           </Button>
           <Button onClick={approveOrder} disabled={order.status === "aprovado"}>
             <CheckCircle2 className="h-4 w-4 mr-1" /> Aprovar pedido
