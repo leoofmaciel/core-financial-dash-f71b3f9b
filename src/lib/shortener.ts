@@ -1,21 +1,44 @@
 export async function shortenUrl(longUrl: string): Promise<string> {
-  try {
-    const tinyUrlEndpoint = `https://tinyurl.com/api-create.php?url=${encodeURIComponent(longUrl)}`;
-    const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(tinyUrlEndpoint)}`;
+  return new Promise((resolve) => {
+    // Usamos JSONP com o is.gd porque ele contorna os bloqueios de CORS dos navegadores
+    // de forma 100% segura e confiável, sem precisar de servidores proxy!
     
-    // Some adblockers might block allorigins or tinyurl. We use a short timeout.
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 5000);
+    const callbackName = 'jsonp_callback_' + Math.round(100000 * Math.random());
     
-    const res = await fetch(proxyUrl, { signal: controller.signal });
-    clearTimeout(timeoutId);
+    // @ts-ignore
+    window[callbackName] = function(data: any) {
+      // @ts-ignore
+      delete window[callbackName];
+      if (script.parentNode) script.parentNode.removeChild(script);
+      
+      if (data && data.shorturl) {
+        resolve(data.shorturl);
+      } else {
+        resolve(longUrl);
+      }
+    };
+
+    const script = document.createElement('script');
+    script.src = `https://is.gd/create.php?format=json&url=${encodeURIComponent(longUrl)}&callback=${callbackName}`;
     
-    if (res.ok) {
-      const text = await res.text();
-      if (text.startsWith("http")) return text;
-    }
-  } catch (e) {
-    console.warn("Failed to shorten url", e);
-  }
-  return longUrl;
+    script.onerror = () => {
+      // @ts-ignore
+      delete window[callbackName];
+      if (script.parentNode) script.parentNode.removeChild(script);
+      resolve(longUrl);
+    };
+    
+    document.body.appendChild(script);
+    
+    // Timeout de 5 segundos
+    setTimeout(() => {
+      // @ts-ignore
+      if (window[callbackName]) {
+        // @ts-ignore
+        delete window[callbackName];
+        if (script.parentNode) script.parentNode.removeChild(script);
+        resolve(longUrl);
+      }
+    }, 5000);
+  });
 }
