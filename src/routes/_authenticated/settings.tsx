@@ -41,9 +41,14 @@ function SettingsPage() {
     const { error } = await supabase.storage.from("logos").upload(path, file, { upsert: true });
     if (error) { setUploading(false); return toast.error(error.message); }
     const { data: { publicUrl } } = supabase.storage.from("logos").getPublicUrl(path);
-    setForm({ ...form, logo_url: publicUrl });
+    const newForm = { ...form, logo_url: publicUrl };
+    setForm(newForm);
+    // Auto-save logo_url immediately so sidebar reflects it
+    const payload = { ...newForm, user_id: user.id };
+    delete payload.id; delete payload.created_at; delete payload.updated_at;
+    await supabase.from("company_settings").upsert(payload, { onConflict: "user_id" });
     setUploading(false);
-    toast.success("Logo enviado");
+    toast.success("Logo atualizado com sucesso!");
   };
 
   return (

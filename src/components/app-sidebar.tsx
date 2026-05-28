@@ -8,6 +8,7 @@ import logo from "@/assets/logo.png";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
+import { useCompanySettings } from "@/hooks/use-company-settings";
 
 const mainItems = [
   { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
@@ -34,6 +35,8 @@ export function AppSidebar({ isAdmin }: { isAdmin: boolean }) {
   const collapsed = state === "collapsed";
   const path = useRouterState({ select: (r) => r.location.pathname });
   const navigate = useNavigate();
+  const company = useCompanySettings();
+  const logoSrc = company?.logo_url || logo;
 
   const closeOnMobile = () => { if (isMobile) setOpenMobile(false); };
 
@@ -48,11 +51,11 @@ export function AppSidebar({ isAdmin }: { isAdmin: boolean }) {
       <SidebarHeader className="p-3">
         <div className="flex items-center gap-2">
           <div className="h-9 w-9 rounded-lg bg-white/95 flex items-center justify-center shrink-0">
-            <img src={logo} alt="RM" className="h-7 w-7 object-contain" />
+            <img src={logoSrc} alt="RM" className="h-7 w-7 object-contain" />
           </div>
           {!collapsed && (
             <div className="flex flex-col leading-tight">
-              <span className="text-sm font-bold text-sidebar-foreground">RM Financeiro</span>
+              <span className="text-sm font-bold text-sidebar-foreground">{company?.company_name || "RM Financeiro"}</span>
               <span className="text-[10px] text-sidebar-foreground/60">Gestão empresarial</span>
             </div>
           )}
