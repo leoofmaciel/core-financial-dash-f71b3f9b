@@ -19,7 +19,6 @@ import { Route as AuthenticatedUsersRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedTransactionsRouteImport } from './routes/_authenticated/transactions'
 import { Route as AuthenticatedTasksRouteImport } from './routes/_authenticated/tasks'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
-import { Route as AuthenticatedReportsRouteImport } from './routes/_authenticated/reports'
 import { Route as AuthenticatedRecurrencesRouteImport } from './routes/_authenticated/recurrences'
 import { Route as AuthenticatedPartnersRouteImport } from './routes/_authenticated/partners'
 import { Route as AuthenticatedLogsRouteImport } from './routes/_authenticated/logs'
@@ -27,9 +26,18 @@ import { Route as AuthenticatedInvestmentsRouteImport } from './routes/_authenti
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedClientsRouteImport } from './routes/_authenticated/clients'
 import { Route as AuthenticatedCategoriesRouteImport } from './routes/_authenticated/categories'
+import { Route as AuthenticatedReportsIndexRouteImport } from './routes/_authenticated/reports/index'
 import { Route as AuthenticatedOrdersIndexRouteImport } from './routes/_authenticated/orders/index'
+import { Route as AuthenticatedFiscalIndexRouteImport } from './routes/_authenticated/fiscal/index'
 import { Route as AuthenticatedBudgetsIndexRouteImport } from './routes/_authenticated/budgets/index'
+import { Route as AuthenticatedReportsInadimplenciaRouteImport } from './routes/_authenticated/reports/inadimplencia'
+import { Route as AuthenticatedReportsFluxoRouteImport } from './routes/_authenticated/reports/fluxo'
+import { Route as AuthenticatedReportsFixosRouteImport } from './routes/_authenticated/reports/fixos'
+import { Route as AuthenticatedReportsFaturamentoRouteImport } from './routes/_authenticated/reports/faturamento'
+import { Route as AuthenticatedReportsConversaoRouteImport } from './routes/_authenticated/reports/conversao'
+import { Route as AuthenticatedReportsClientesRouteImport } from './routes/_authenticated/reports/clientes'
 import { Route as AuthenticatedOrdersIdRouteImport } from './routes/_authenticated/orders/$id'
+import { Route as AuthenticatedFiscalNovaRouteImport } from './routes/_authenticated/fiscal/nova'
 import { Route as AuthenticatedBudgetsIdRouteImport } from './routes/_authenticated/budgets/$id'
 
 const SignupRoute = SignupRouteImport.update({
@@ -82,11 +90,6 @@ const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
   path: '/settings',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
-const AuthenticatedReportsRoute = AuthenticatedReportsRouteImport.update({
-  id: '/reports',
-  path: '/reports',
-  getParentRoute: () => AuthenticatedRoute,
-} as any)
 const AuthenticatedRecurrencesRoute =
   AuthenticatedRecurrencesRouteImport.update({
     id: '/recurrences',
@@ -124,10 +127,22 @@ const AuthenticatedCategoriesRoute = AuthenticatedCategoriesRouteImport.update({
   path: '/categories',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedReportsIndexRoute =
+  AuthenticatedReportsIndexRouteImport.update({
+    id: '/reports/',
+    path: '/reports/',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedOrdersIndexRoute =
   AuthenticatedOrdersIndexRouteImport.update({
     id: '/orders/',
     path: '/orders/',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedFiscalIndexRoute =
+  AuthenticatedFiscalIndexRouteImport.update({
+    id: '/fiscal/',
+    path: '/fiscal/',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
 const AuthenticatedBudgetsIndexRoute =
@@ -136,9 +151,50 @@ const AuthenticatedBudgetsIndexRoute =
     path: '/budgets/',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedReportsInadimplenciaRoute =
+  AuthenticatedReportsInadimplenciaRouteImport.update({
+    id: '/reports/inadimplencia',
+    path: '/reports/inadimplencia',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedReportsFluxoRoute =
+  AuthenticatedReportsFluxoRouteImport.update({
+    id: '/reports/fluxo',
+    path: '/reports/fluxo',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedReportsFixosRoute =
+  AuthenticatedReportsFixosRouteImport.update({
+    id: '/reports/fixos',
+    path: '/reports/fixos',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedReportsFaturamentoRoute =
+  AuthenticatedReportsFaturamentoRouteImport.update({
+    id: '/reports/faturamento',
+    path: '/reports/faturamento',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedReportsConversaoRoute =
+  AuthenticatedReportsConversaoRouteImport.update({
+    id: '/reports/conversao',
+    path: '/reports/conversao',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedReportsClientesRoute =
+  AuthenticatedReportsClientesRouteImport.update({
+    id: '/reports/clientes',
+    path: '/reports/clientes',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedOrdersIdRoute = AuthenticatedOrdersIdRouteImport.update({
   id: '/orders/$id',
   path: '/orders/$id',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedFiscalNovaRoute = AuthenticatedFiscalNovaRouteImport.update({
+  id: '/fiscal/nova',
+  path: '/fiscal/nova',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedBudgetsIdRoute = AuthenticatedBudgetsIdRouteImport.update({
@@ -160,15 +216,23 @@ export interface FileRoutesByFullPath {
   '/logs': typeof AuthenticatedLogsRoute
   '/partners': typeof AuthenticatedPartnersRoute
   '/recurrences': typeof AuthenticatedRecurrencesRoute
-  '/reports': typeof AuthenticatedReportsRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/tasks': typeof AuthenticatedTasksRoute
   '/transactions': typeof AuthenticatedTransactionsRoute
   '/users': typeof AuthenticatedUsersRoute
   '/budgets/$id': typeof AuthenticatedBudgetsIdRoute
+  '/fiscal/nova': typeof AuthenticatedFiscalNovaRoute
   '/orders/$id': typeof AuthenticatedOrdersIdRoute
+  '/reports/clientes': typeof AuthenticatedReportsClientesRoute
+  '/reports/conversao': typeof AuthenticatedReportsConversaoRoute
+  '/reports/faturamento': typeof AuthenticatedReportsFaturamentoRoute
+  '/reports/fixos': typeof AuthenticatedReportsFixosRoute
+  '/reports/fluxo': typeof AuthenticatedReportsFluxoRoute
+  '/reports/inadimplencia': typeof AuthenticatedReportsInadimplenciaRoute
   '/budgets/': typeof AuthenticatedBudgetsIndexRoute
+  '/fiscal/': typeof AuthenticatedFiscalIndexRoute
   '/orders/': typeof AuthenticatedOrdersIndexRoute
+  '/reports/': typeof AuthenticatedReportsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -183,15 +247,23 @@ export interface FileRoutesByTo {
   '/logs': typeof AuthenticatedLogsRoute
   '/partners': typeof AuthenticatedPartnersRoute
   '/recurrences': typeof AuthenticatedRecurrencesRoute
-  '/reports': typeof AuthenticatedReportsRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/tasks': typeof AuthenticatedTasksRoute
   '/transactions': typeof AuthenticatedTransactionsRoute
   '/users': typeof AuthenticatedUsersRoute
   '/budgets/$id': typeof AuthenticatedBudgetsIdRoute
+  '/fiscal/nova': typeof AuthenticatedFiscalNovaRoute
   '/orders/$id': typeof AuthenticatedOrdersIdRoute
+  '/reports/clientes': typeof AuthenticatedReportsClientesRoute
+  '/reports/conversao': typeof AuthenticatedReportsConversaoRoute
+  '/reports/faturamento': typeof AuthenticatedReportsFaturamentoRoute
+  '/reports/fixos': typeof AuthenticatedReportsFixosRoute
+  '/reports/fluxo': typeof AuthenticatedReportsFluxoRoute
+  '/reports/inadimplencia': typeof AuthenticatedReportsInadimplenciaRoute
   '/budgets': typeof AuthenticatedBudgetsIndexRoute
+  '/fiscal': typeof AuthenticatedFiscalIndexRoute
   '/orders': typeof AuthenticatedOrdersIndexRoute
+  '/reports': typeof AuthenticatedReportsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -208,15 +280,23 @@ export interface FileRoutesById {
   '/_authenticated/logs': typeof AuthenticatedLogsRoute
   '/_authenticated/partners': typeof AuthenticatedPartnersRoute
   '/_authenticated/recurrences': typeof AuthenticatedRecurrencesRoute
-  '/_authenticated/reports': typeof AuthenticatedReportsRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/tasks': typeof AuthenticatedTasksRoute
   '/_authenticated/transactions': typeof AuthenticatedTransactionsRoute
   '/_authenticated/users': typeof AuthenticatedUsersRoute
   '/_authenticated/budgets/$id': typeof AuthenticatedBudgetsIdRoute
+  '/_authenticated/fiscal/nova': typeof AuthenticatedFiscalNovaRoute
   '/_authenticated/orders/$id': typeof AuthenticatedOrdersIdRoute
+  '/_authenticated/reports/clientes': typeof AuthenticatedReportsClientesRoute
+  '/_authenticated/reports/conversao': typeof AuthenticatedReportsConversaoRoute
+  '/_authenticated/reports/faturamento': typeof AuthenticatedReportsFaturamentoRoute
+  '/_authenticated/reports/fixos': typeof AuthenticatedReportsFixosRoute
+  '/_authenticated/reports/fluxo': typeof AuthenticatedReportsFluxoRoute
+  '/_authenticated/reports/inadimplencia': typeof AuthenticatedReportsInadimplenciaRoute
   '/_authenticated/budgets/': typeof AuthenticatedBudgetsIndexRoute
+  '/_authenticated/fiscal/': typeof AuthenticatedFiscalIndexRoute
   '/_authenticated/orders/': typeof AuthenticatedOrdersIndexRoute
+  '/_authenticated/reports/': typeof AuthenticatedReportsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -233,15 +313,23 @@ export interface FileRouteTypes {
     | '/logs'
     | '/partners'
     | '/recurrences'
-    | '/reports'
     | '/settings'
     | '/tasks'
     | '/transactions'
     | '/users'
     | '/budgets/$id'
+    | '/fiscal/nova'
     | '/orders/$id'
+    | '/reports/clientes'
+    | '/reports/conversao'
+    | '/reports/faturamento'
+    | '/reports/fixos'
+    | '/reports/fluxo'
+    | '/reports/inadimplencia'
     | '/budgets/'
+    | '/fiscal/'
     | '/orders/'
+    | '/reports/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -256,15 +344,23 @@ export interface FileRouteTypes {
     | '/logs'
     | '/partners'
     | '/recurrences'
-    | '/reports'
     | '/settings'
     | '/tasks'
     | '/transactions'
     | '/users'
     | '/budgets/$id'
+    | '/fiscal/nova'
     | '/orders/$id'
+    | '/reports/clientes'
+    | '/reports/conversao'
+    | '/reports/faturamento'
+    | '/reports/fixos'
+    | '/reports/fluxo'
+    | '/reports/inadimplencia'
     | '/budgets'
+    | '/fiscal'
     | '/orders'
+    | '/reports'
   id:
     | '__root__'
     | '/'
@@ -280,15 +376,23 @@ export interface FileRouteTypes {
     | '/_authenticated/logs'
     | '/_authenticated/partners'
     | '/_authenticated/recurrences'
-    | '/_authenticated/reports'
     | '/_authenticated/settings'
     | '/_authenticated/tasks'
     | '/_authenticated/transactions'
     | '/_authenticated/users'
     | '/_authenticated/budgets/$id'
+    | '/_authenticated/fiscal/nova'
     | '/_authenticated/orders/$id'
+    | '/_authenticated/reports/clientes'
+    | '/_authenticated/reports/conversao'
+    | '/_authenticated/reports/faturamento'
+    | '/_authenticated/reports/fixos'
+    | '/_authenticated/reports/fluxo'
+    | '/_authenticated/reports/inadimplencia'
     | '/_authenticated/budgets/'
+    | '/_authenticated/fiscal/'
     | '/_authenticated/orders/'
+    | '/_authenticated/reports/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -372,13 +476,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSettingsRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
-    '/_authenticated/reports': {
-      id: '/_authenticated/reports'
-      path: '/reports'
-      fullPath: '/reports'
-      preLoaderRoute: typeof AuthenticatedReportsRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
     '/_authenticated/recurrences': {
       id: '/_authenticated/recurrences'
       path: '/recurrences'
@@ -428,11 +525,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedCategoriesRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/reports/': {
+      id: '/_authenticated/reports/'
+      path: '/reports'
+      fullPath: '/reports/'
+      preLoaderRoute: typeof AuthenticatedReportsIndexRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/orders/': {
       id: '/_authenticated/orders/'
       path: '/orders'
       fullPath: '/orders/'
       preLoaderRoute: typeof AuthenticatedOrdersIndexRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/fiscal/': {
+      id: '/_authenticated/fiscal/'
+      path: '/fiscal'
+      fullPath: '/fiscal/'
+      preLoaderRoute: typeof AuthenticatedFiscalIndexRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/budgets/': {
@@ -442,11 +553,60 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedBudgetsIndexRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/reports/inadimplencia': {
+      id: '/_authenticated/reports/inadimplencia'
+      path: '/reports/inadimplencia'
+      fullPath: '/reports/inadimplencia'
+      preLoaderRoute: typeof AuthenticatedReportsInadimplenciaRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/reports/fluxo': {
+      id: '/_authenticated/reports/fluxo'
+      path: '/reports/fluxo'
+      fullPath: '/reports/fluxo'
+      preLoaderRoute: typeof AuthenticatedReportsFluxoRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/reports/fixos': {
+      id: '/_authenticated/reports/fixos'
+      path: '/reports/fixos'
+      fullPath: '/reports/fixos'
+      preLoaderRoute: typeof AuthenticatedReportsFixosRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/reports/faturamento': {
+      id: '/_authenticated/reports/faturamento'
+      path: '/reports/faturamento'
+      fullPath: '/reports/faturamento'
+      preLoaderRoute: typeof AuthenticatedReportsFaturamentoRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/reports/conversao': {
+      id: '/_authenticated/reports/conversao'
+      path: '/reports/conversao'
+      fullPath: '/reports/conversao'
+      preLoaderRoute: typeof AuthenticatedReportsConversaoRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/reports/clientes': {
+      id: '/_authenticated/reports/clientes'
+      path: '/reports/clientes'
+      fullPath: '/reports/clientes'
+      preLoaderRoute: typeof AuthenticatedReportsClientesRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/orders/$id': {
       id: '/_authenticated/orders/$id'
       path: '/orders/$id'
       fullPath: '/orders/$id'
       preLoaderRoute: typeof AuthenticatedOrdersIdRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/fiscal/nova': {
+      id: '/_authenticated/fiscal/nova'
+      path: '/fiscal/nova'
+      fullPath: '/fiscal/nova'
+      preLoaderRoute: typeof AuthenticatedFiscalNovaRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/budgets/$id': {
@@ -467,15 +627,23 @@ interface AuthenticatedRouteChildren {
   AuthenticatedLogsRoute: typeof AuthenticatedLogsRoute
   AuthenticatedPartnersRoute: typeof AuthenticatedPartnersRoute
   AuthenticatedRecurrencesRoute: typeof AuthenticatedRecurrencesRoute
-  AuthenticatedReportsRoute: typeof AuthenticatedReportsRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
   AuthenticatedTasksRoute: typeof AuthenticatedTasksRoute
   AuthenticatedTransactionsRoute: typeof AuthenticatedTransactionsRoute
   AuthenticatedUsersRoute: typeof AuthenticatedUsersRoute
   AuthenticatedBudgetsIdRoute: typeof AuthenticatedBudgetsIdRoute
+  AuthenticatedFiscalNovaRoute: typeof AuthenticatedFiscalNovaRoute
   AuthenticatedOrdersIdRoute: typeof AuthenticatedOrdersIdRoute
+  AuthenticatedReportsClientesRoute: typeof AuthenticatedReportsClientesRoute
+  AuthenticatedReportsConversaoRoute: typeof AuthenticatedReportsConversaoRoute
+  AuthenticatedReportsFaturamentoRoute: typeof AuthenticatedReportsFaturamentoRoute
+  AuthenticatedReportsFixosRoute: typeof AuthenticatedReportsFixosRoute
+  AuthenticatedReportsFluxoRoute: typeof AuthenticatedReportsFluxoRoute
+  AuthenticatedReportsInadimplenciaRoute: typeof AuthenticatedReportsInadimplenciaRoute
   AuthenticatedBudgetsIndexRoute: typeof AuthenticatedBudgetsIndexRoute
+  AuthenticatedFiscalIndexRoute: typeof AuthenticatedFiscalIndexRoute
   AuthenticatedOrdersIndexRoute: typeof AuthenticatedOrdersIndexRoute
+  AuthenticatedReportsIndexRoute: typeof AuthenticatedReportsIndexRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
@@ -486,15 +654,24 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedLogsRoute: AuthenticatedLogsRoute,
   AuthenticatedPartnersRoute: AuthenticatedPartnersRoute,
   AuthenticatedRecurrencesRoute: AuthenticatedRecurrencesRoute,
-  AuthenticatedReportsRoute: AuthenticatedReportsRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedTasksRoute: AuthenticatedTasksRoute,
   AuthenticatedTransactionsRoute: AuthenticatedTransactionsRoute,
   AuthenticatedUsersRoute: AuthenticatedUsersRoute,
   AuthenticatedBudgetsIdRoute: AuthenticatedBudgetsIdRoute,
+  AuthenticatedFiscalNovaRoute: AuthenticatedFiscalNovaRoute,
   AuthenticatedOrdersIdRoute: AuthenticatedOrdersIdRoute,
+  AuthenticatedReportsClientesRoute: AuthenticatedReportsClientesRoute,
+  AuthenticatedReportsConversaoRoute: AuthenticatedReportsConversaoRoute,
+  AuthenticatedReportsFaturamentoRoute: AuthenticatedReportsFaturamentoRoute,
+  AuthenticatedReportsFixosRoute: AuthenticatedReportsFixosRoute,
+  AuthenticatedReportsFluxoRoute: AuthenticatedReportsFluxoRoute,
+  AuthenticatedReportsInadimplenciaRoute:
+    AuthenticatedReportsInadimplenciaRoute,
   AuthenticatedBudgetsIndexRoute: AuthenticatedBudgetsIndexRoute,
+  AuthenticatedFiscalIndexRoute: AuthenticatedFiscalIndexRoute,
   AuthenticatedOrdersIndexRoute: AuthenticatedOrdersIndexRoute,
+  AuthenticatedReportsIndexRoute: AuthenticatedReportsIndexRoute,
 }
 
 const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
@@ -512,13 +689,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
