@@ -200,8 +200,9 @@ export function Copilot() {
     }
 
     if (botState === "WAITING_TX_DESC") {
-      setDraftTx(prev => ({ ...prev, name: text.trim() }));
-      addMsg("bot", `Certo! Qual é o valor dessa movimentação ("${text.trim()}")? (Apenas números, ex: 150.50)`);
+      const capText = text.trim().charAt(0).toUpperCase() + text.trim().slice(1);
+      setDraftTx(prev => ({ ...prev, name: capText }));
+      addMsg("bot", `Certo! Qual é o valor dessa movimentação ("${capText}")? (Apenas números, ex: 150.50)`);
       setBotState("WAITING_TX_VALUE");
       return;
     }
@@ -214,7 +215,8 @@ export function Copilot() {
       setDraftTx(prev => ({ ...prev, value: val }));
       
       setLoading(true);
-      const { data } = await supabase.from("categories").select("*").order("name");
+      const currentType = draftTx.type || "saida";
+      const { data } = await supabase.from("categories").select("*").eq("type", currentType).order("name");
       setLoading(false);
       
       const opts = (data || []).map((c: any) => ({ label: c.name, action: "SELECT_TX_CATEGORY", data: c.id }));
@@ -226,18 +228,19 @@ export function Copilot() {
     }
 
     if (botState === "WAITING_NEW_CATEGORY_NAME") {
+      const capText = text.trim().charAt(0).toUpperCase() + text.trim().slice(1);
       setLoading(true);
       try {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) throw new Error("Sem usuário");
         const { data: newCat, error } = await supabase.from("categories").insert({
-          user_id: user.id, name: text.trim(), color: "#3b82f6"
+          user_id: user.id, name: capText, color: "#3b82f6", type: draftTx.type || "saida"
         }).select().single();
         if (error) throw error;
         
         qc.invalidateQueries({ queryKey: ["categories"] });
         setDraftTx(prev => ({ ...prev, category_id: newCat.id }));
-        addMsg("bot", `Categoria **${text.trim()}** criada e selecionada!\n\nAgora, qual é o status atual dessa movimentação?`, [
+        addMsg("bot", `Categoria **${capText}** criada e selecionada!\n\nAgora, qual é o status atual dessa movimentação?`, [
            { label: "Já está Paga / Recebida", action: "SELECT_TX_STATUS", data: "pago", primary: true },
            { label: "Pendente (A vencer)", action: "SELECT_TX_STATUS", data: "pendente" }
         ]);

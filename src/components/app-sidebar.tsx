@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { LayoutDashboard, ArrowRightLeft, Tags, FileText, BarChart3, Settings, Users, LogOut, History, Repeat, UserCircle, ClipboardList, Wallet, CheckSquare, HandCoins } from "lucide-react";
+import { LayoutDashboard, ArrowRightLeft, Tags, FileText, BarChart3, Settings, Users, LogOut, History, Repeat, UserCircle, ClipboardList, Wallet, CheckSquare, HandCoins, PieChart, Target, BarChart2 } from "lucide-react";
 import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel,
   SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarHeader, SidebarFooter, useSidebar,
@@ -15,13 +15,14 @@ const mainItems = [
   { title: "Clientes", url: "/clients", icon: UserCircle },
   { title: "Pedidos", url: "/orders", icon: ClipboardList },
   { title: "Orçamentos", url: "/budgets", icon: FileText },
+  { title: "Relatórios", url: "/reports", icon: BarChart2 },
+  { title: "Planejamento (Metas)", url: "/budgets", icon: Target },
   { title: "Movimentações", url: "/transactions", icon: ArrowRightLeft },
   { title: "Recorrências", url: "/recurrences", icon: Repeat },
   { title: "Investimentos", url: "/investments", icon: Wallet },
   { title: "Sócios", url: "/partners", icon: HandCoins },
   { title: "Tarefas", url: "/tasks", icon: CheckSquare },
   { title: "Categorias", url: "/categories", icon: Tags },
-  { title: "Relatórios", url: "/reports", icon: BarChart3 },
 ];
 
 const settingsItems = [
@@ -50,8 +51,8 @@ export function AppSidebar({ isAdmin }: { isAdmin: boolean }) {
     <Sidebar collapsible="icon">
       <SidebarHeader className="p-3">
         <div className="flex items-center gap-2">
-          <div className="h-9 w-9 rounded-lg bg-white/95 flex items-center justify-center shrink-0">
-            <img src={logoSrc} alt="RM" className="h-7 w-7 object-contain" />
+          <div className="flex items-center justify-center shrink-0">
+            <img src={logoSrc} alt="RM" className="h-8 w-8 object-contain" />
           </div>
           {!collapsed && (
             <div className="flex flex-col leading-tight">
