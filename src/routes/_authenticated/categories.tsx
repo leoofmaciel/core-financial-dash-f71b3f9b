@@ -23,7 +23,6 @@ function CategoriesPage() {
   const [editing, setEditing] = useState<any>(null);
   const [name, setName] = useState("");
   const [type, setType] = useState<"entrada" | "saida">("saida");
-  const [color, setColor] = useState("#ef4444");
 
   const { data: cats = [] } = useQuery({
     queryKey: ["categories"],
@@ -36,13 +35,14 @@ function CategoriesPage() {
   const save = async () => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
+    const finalColor = type === "entrada" ? "#22c55e" : "#ef4444";
     const res = editing
-      ? await supabase.from("categories").update({ name, color, icon: type }).eq("id", editing.id).select().single()
-      : await supabase.from("categories").insert({ user_id: user.id, name, color, icon: type }).select().single();
+      ? await supabase.from("categories").update({ name, color: finalColor, icon: type }).eq("id", editing.id).select().single()
+      : await supabase.from("categories").insert({ user_id: user.id, name, color: finalColor, icon: type }).select().single();
     if (res.error) return toast.error(res.error.message);
     await logActivity(editing ? "update" : "create", "category", res.data?.id, { name, type });
     toast.success(editing ? "Atualizado" : "Criado");
-    setOpen(false); setName(""); setEditing(null); setType("saida"); setColor("#ef4444");
+    setOpen(false); setName(""); setEditing(null); setType("saida");
     qc.invalidateQueries({ queryKey: ["categories"] });
   };
 
@@ -75,7 +75,7 @@ function CategoriesPage() {
           {cats.length === 0 && <Button variant="outline" onClick={seedDefaults}>Criar padrões</Button>}
           <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) { setName(""); setEditing(null); } }}>
             <DialogTrigger asChild>
-              <Button onClick={() => { setEditing(null); setName(""); setType("saida"); setColor("#ef4444"); }}><Plus className="h-4 w-4 mr-1" /> Nova categoria</Button>
+              <Button onClick={() => { setEditing(null); setName(""); setType("saida"); }}><Plus className="h-4 w-4 mr-1" /> Nova categoria</Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader><DialogTitle>{editing ? "Editar" : "Nova"} categoria</DialogTitle></DialogHeader>
@@ -83,10 +83,7 @@ function CategoriesPage() {
                 <div className="space-y-2"><Label>Nome</Label><Input value={name} onChange={(e) => setName(e.target.value)} /></div>
                 <div className="space-y-2">
                   <Label>Tipo</Label>
-                  <Select value={type} onValueChange={(val: "entrada" | "saida") => { 
-                    setType(val); 
-                    if (!editing) setColor(val === "entrada" ? "#22c55e" : "#ef4444"); 
-                  }}>
+                  <Select value={type} onValueChange={(val: "entrada" | "saida") => setType(val)}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="entrada">Entrada (Receita)</SelectItem>
@@ -94,7 +91,6 @@ function CategoriesPage() {
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="space-y-2"><Label>Cor</Label><Input type="color" value={color} onChange={(e) => setColor(e.target.value)} className="h-10 w-20" /></div>
               </div>
               <DialogFooter>
                 <Button variant="outline" onClick={() => setOpen(false)}>Cancelar</Button>
@@ -115,7 +111,7 @@ function CategoriesPage() {
                 {c.icon === "entrada" ? <ArrowUpCircle className="h-4 w-4 text-green-500" /> : <ArrowDownCircle className="h-4 w-4 text-red-500" />}
               </div>
               <div className="flex gap-1">
-                <Button size="icon" variant="ghost" onClick={() => { setEditing(c); setName(c.name); setColor(c.color || "#1e40af"); setType((c.icon as "entrada" | "saida") || "saida"); setOpen(true); }}><Pencil className="h-4 w-4" /></Button>
+                <Button size="icon" variant="ghost" onClick={() => { setEditing(c); setName(c.name); setType((c.icon as "entrada" | "saida") || "saida"); setOpen(true); }}><Pencil className="h-4 w-4" /></Button>
                 <AlertDialog>
                   <AlertDialogTrigger asChild><Button size="icon" variant="ghost"><Trash2 className="h-4 w-4 text-destructive" /></Button></AlertDialogTrigger>
                   <AlertDialogContent>
