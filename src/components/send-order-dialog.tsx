@@ -10,6 +10,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Loader2, Mail, MessageCircle, Send } from "lucide-react";
 import { toast } from "sonner";
 import { formatBRL } from "@/lib/format";
+import { generateBudgetPDF } from "@/lib/pdf";
 import { logActivity } from "@/lib/logs";
 
 type Props = {
@@ -42,12 +43,44 @@ export function SendOrderDialog({ open, onOpenChange, orderId, orderNumber, tota
   useEffect(() => {
     if (!open) return;
     const number = `#${String(orderNumber ?? "").padStart(5, "0")}`;
-    const vars = { name: client?.name ?? "", number, total: formatBRL(total), pdf: pdfUrl };
+    const vars = { name: client?.name ?? "", number, total: formatBRL(total), pdf: pdfUrl || "[Gerando link do PDF... aguarde]" };
     setPhone(client?.phone ?? "");
     setEmail(client?.email ?? "");
     setWaMsg(defaultWhatsTemplate(vars));
     setSubject(defaultEmailSubject(number));
     setEmailBody(defaultEmailBody(vars));
+    
+    if (!pdfUrl && open) {
+      (async () => {
+        try {
+          const { data: { user } } = await supabase.auth.getUser();
+          if (!user) return;
+          const { data: company } = await supabase.from("company_settings").select("*").eq("user_id", user.id).maybeSingle();
+          const { data: b } = await supabase.from("budgets").select("*").eq("order_id", orderId).maybeSingle();
+          
+          if (!b) return; // Order hasn't been generated into a budget yet
+          
+          const { data: bi } = await supabase.from("budget_items").select("*").eq("budget_id", b.id).order("position");
+          
+          const doc = await generateBudgetPDF({ ...b, items: bi || [] } as any, company ?? {}, true);
+          const blob = doc.output("blob");
+          const fileName = `${user.id}/orcamento-${String(b.number).padStart(5, "0")}-${Date.now()}.pdf`;
+          
+          const { error: uploadError } = await supabase.storage.from("attachments").upload(fileName, blob, { contentType: "application/pdf", upsert: true });
+          if (uploadError) throw uploadError;
+          
+          const { data } = await supabase.storage.from("attachments").createSignedUrl(fileName, 60 * 60 * 24 * 30);
+          if (data?.signedUrl) {
+             setWaMsg(prev => prev.replace("[Gerando link do PDF... aguarde]", data.signedUrl));
+             setEmailBody(prev => prev.replace("[Gerando link do PDF... aguarde]", data.signedUrl));
+          }
+        } catch (err) {
+           console.error("Error generating pdf link in dialog", err);
+           setWaMsg(prev => prev.replace("[Gerando link do PDF... aguarde]", "[Erro ao gerar link]"));
+           setEmailBody(prev => prev.replace("[Gerando link do PDF... aguarde]", "[Erro ao gerar link]"));
+        }
+      })();
+    }
   }, [open, orderId, orderNumber, total, client, pdfUrl]);
 
   const log = async (channel: "whatsapp" | "email", recipient: string, body: string, subj?: string) => {
