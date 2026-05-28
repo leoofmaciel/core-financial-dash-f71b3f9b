@@ -56,7 +56,7 @@ function BudgetsList() {
           <h1 className="text-2xl sm:text-3xl font-bold">Orçamentos</h1>
           <p className="text-sm text-muted-foreground">Crie e baixe orçamentos em PDF.</p>
         </div>
-        <Button asChild><Link to="/budgets/new"><Plus className="h-4 w-4 mr-1" /> Novo orçamento</Link></Button>
+        <Button asChild><Link to="/budgets/$id" params={{ id: "new" }}><Plus className="h-4 w-4 mr-1" /> Novo orçamento</Link></Button>
       </div>
 
       <Card>
