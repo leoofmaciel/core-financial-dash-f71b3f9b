@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { LayoutDashboard, ArrowRightLeft, Tags, FileText, BarChart3, Settings, Users, LogOut, History, Repeat, UserCircle, ClipboardList, Wallet, CheckSquare, HandCoins, PieChart, Target, BarChart2 } from "lucide-react";
+import { LayoutDashboard, ArrowRightLeft, Tags, FileText, BarChart3, Settings, Users, LogOut, History, Repeat, UserCircle, ClipboardList, Wallet, CheckSquare, HandCoins, PieChart, Target, BarChart2, Receipt } from "lucide-react";
 import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel,
   SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarHeader, SidebarFooter, useSidebar,
@@ -12,6 +12,7 @@ import { useCompanySettings } from "@/hooks/use-company-settings";
 
 const mainItems = [
   { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
+  { title: "Fiscal (NFe)", url: "/fiscal", icon: Receipt },
   { title: "Clientes", url: "/clients", icon: UserCircle },
   { title: "Pedidos", url: "/orders", icon: ClipboardList },
   { title: "Orçamentos", url: "/budgets", icon: FileText },

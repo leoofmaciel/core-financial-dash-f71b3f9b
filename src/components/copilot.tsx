@@ -59,7 +59,7 @@ const initialMessage: Message = {
   sender: "bot",
   text: "Olá! Sou seu Assistente Financeiro. Escolha uma das tarefas abaixo ou digite o que precisa:",
   options: [
-    { label: "Novo Pedido", action: "NEW_ORDER", primary: true },
+    { label: "Novo Pedido", action: "NEW_ORDER" },
     { label: "Nova Movimentação", action: "NEW_TRANSACTION" },
     { label: "Adicionar Recorrência", action: "NEW_RECURRENCE" },
     { label: "Aprovar Orçamento", action: "APPROVE_BUDGET" },
