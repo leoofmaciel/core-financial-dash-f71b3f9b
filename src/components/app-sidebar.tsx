@@ -12,7 +12,7 @@ import { useCompanySettings } from "@/hooks/use-company-settings";
 
 const mainItems = [
   { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
-  { title: "Fiscal", url: "/fiscal", icon: Receipt },
+  { title: "Fiscal", url: "/fiscal", icon: Receipt, disabled: true },
   { title: "Clientes", url: "/clients", icon: UserCircle },
   { title: "Pedidos", url: "/orders", icon: ClipboardList },
   { title: "Orçamentos", url: "/budgets", icon: FileText },
@@ -69,12 +69,19 @@ export function AppSidebar({ isAdmin }: { isAdmin: boolean }) {
           <SidebarGroupContent>
             <SidebarMenu>
               {mainItems.map((item) => (
-                <SidebarMenuItem key={item.url}>
-                  <SidebarMenuButton asChild isActive={path.startsWith(item.url)}>
-                    <Link to={item.url} onClick={closeOnMobile}>
-                      <item.icon />
-                      <span>{item.title}</span>
-                    </Link>
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton asChild={!item.disabled} tooltip={item.title} disabled={item.disabled} className={item.disabled ? "opacity-50 cursor-not-allowed" : ""}>
+                    {item.disabled ? (
+                      <div className="flex items-center gap-2">
+                        <item.icon className="h-4 w-4" />
+                        <span>{item.title} (Em Breve)</span>
+                      </div>
+                    ) : (
+                      <Link to={item.url} onClick={closeOnMobile} className="flex items-center gap-2">
+                        <item.icon className="h-4 w-4" />
+                        <span>{item.title}</span>
+                      </Link>
+                    )}
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
