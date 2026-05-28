@@ -398,7 +398,7 @@ export function OrderHubDialog({
                   <Button size="sm" variant="outline" className="w-full justify-start" onClick={generatePDF} disabled={order.status === "aprovado"}>
                     <FileText className="h-3.5 w-3.5 mr-2" /> Gerar orçamento (PDF)
                   </Button>
-                  <Button size="sm" variant="outline" className="w-full justify-start" disabled title="Em breve">
+                  <Button size="sm" variant="outline" className="w-full justify-start" onClick={() => currentId ? setSendOpen(true) : toast.error("Salve o pedido primeiro")}>
                     <Send className="h-3.5 w-3.5 mr-2" /> Enviar (WhatsApp / E-mail)
                   </Button>
                   <Button size="sm" className="w-full justify-start" onClick={approve} disabled={order.status === "aprovado"}>
@@ -406,6 +406,10 @@ export function OrderHubDialog({
                   </Button>
                 </div>
               </div>
+
+              <Separator />
+
+              <OrderAttachments orderId={currentId} />
 
               <Separator />
 
