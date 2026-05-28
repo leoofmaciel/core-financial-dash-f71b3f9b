@@ -45,7 +45,14 @@ type BotState =
   | "WAITING_TX_DUE_DATE"
   | "WAITING_PAYMENT_SEARCH"
   | "SELECTING_PENDING_PAYMENT"
-  | "SELECTING_PENDING_BUDGET";
+  | "SELECTING_PENDING_BUDGET"
+  | "WAITING_REC_TYPE"
+  | "WAITING_REC_NAME"
+  | "WAITING_REC_VALUE"
+  | "SELECTING_REC_CATEGORY"
+  | "WAITING_REC_NEW_CATEGORY"
+  | "WAITING_REC_FREQ"
+  | "WAITING_REC_NEXT_RUN";
 
 const initialMessage: Message = {
   id: "msg-1",
@@ -54,7 +61,7 @@ const initialMessage: Message = {
   options: [
     { label: "Novo Pedido", action: "NEW_ORDER", primary: true },
     { label: "Nova Movimentação", action: "NEW_TRANSACTION" },
-    { label: "Registrar Recebimento", action: "NEW_PAYMENT" },
+    { label: "Adicionar Recorrência", action: "NEW_RECURRENCE" },
     { label: "Aprovar Orçamento", action: "APPROVE_BUDGET" },
     { label: "Resumo do Mês", action: "MONTH_SUMMARY" }
   ]
@@ -133,7 +140,7 @@ export function Copilot() {
       const lower = text.toLowerCase();
       if (lower.includes("pedido") || lower.includes("orçamento")) return processOption({ label: "Criar Pedido Novo", action: "NEW_ORDER" });
       if (lower.includes("despesa") || lower.includes("conta") || lower.includes("receita") || lower.includes("movimentação") || lower.includes("movimentacao")) return processOption({ label: "Nova Movimentação", action: "NEW_TRANSACTION" });
-      if (lower.includes("pagamento") || lower.includes("recebimento") || lower.includes("baixa")) return processOption({ label: "Registrar Recebimento", action: "NEW_PAYMENT" });
+      if (lower.includes("recorrência") || lower.includes("recorrencia") || lower.includes("fixa")) return processOption({ label: "Adicionar Recorrência", action: "NEW_RECURRENCE" });
       if (lower.includes("aprovar") || lower.includes("orçamento")) return processOption({ label: "Aprovar Orçamento", action: "APPROVE_BUDGET" });
       if (lower.includes("resumo") || lower.includes("mês")) return processOption({ label: "Resumo do Mês", action: "MONTH_SUMMARY" });
       
@@ -196,6 +203,126 @@ export function Copilot() {
 
     if (botState === "SELECTING_CLIENT" || botState === "CONFIRM_NEW_CLIENT" || botState === "ASK_MORE_DATA" || botState === "SELECTING_TX_CATEGORY" || botState === "SELECTING_PENDING_PAYMENT" || botState === "SELECTING_PENDING_BUDGET") {
       addMsg("bot", "Por favor, clique em um dos botões acima para continuar.");
+      return;
+    }
+
+    if (botState === "SELECTING_TX_CATEGORY") {
+      addMsg("bot", "Por favor, clique em uma das opções acima ou digite 'cancelar'.");
+      return;
+    }
+
+    if (botState === "WAITING_REC_NAME") {
+      const capText = text.trim().charAt(0).toUpperCase() + text.trim().slice(1);
+      setDraftTx(prev => ({ ...prev, name: capText }));
+      addMsg("bot", `Certo! Qual é o valor dessa recorrência ("${capText}")? (Apenas números, ex: 150.50)`);
+      setBotState("WAITING_REC_VALUE");
+      return;
+    }
+
+    if (botState === "WAITING_REC_VALUE") {
+      const val = parseFloat(text.replace(",", "."));
+      if (isNaN(val)) {
+        addMsg("bot", "Valor inválido. Digite apenas números (ex: 150.50 ou 150,50):");
+        return;
+      }
+      setDraftTx(prev => ({ ...prev, value: val }));
+      
+      setLoading(true);
+      const currentType = draftTx.type || "saida";
+      const { data } = await supabase.from("categories").select("*").eq("icon", currentType).order("name");
+      setLoading(false);
+      
+      const opts = (data || []).map((c: any) => ({ label: c.name, action: "SELECT_REC_CATEGORY", data: c.id }));
+      opts.push({ label: "➕ Criar Nova", action: "CREATE_NEW_REC_CATEGORY" });
+      
+      addMsg("bot", `Valor anotado: ${formatBRL(val)}. Agora, selecione a categoria dessa recorrência:`, opts);
+      setBotState("SELECTING_REC_CATEGORY");
+      return;
+    }
+
+    if (botState === "WAITING_REC_NEW_CATEGORY") {
+      const capText = text.trim().charAt(0).toUpperCase() + text.trim().slice(1);
+      setLoading(true);
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) throw new Error("Sem usuário");
+        const catType = draftTx.type || "saida";
+        const catColor = catType === "entrada" ? "#22c55e" : "#ef4444";
+        const { data: newCat, error } = await supabase.from("categories").insert({
+          user_id: user.id, name: capText, color: catColor, icon: catType
+        }).select().single();
+        if (error) throw error;
+        
+        qc.invalidateQueries({ queryKey: ["categories"] });
+        setDraftTx(prev => ({ ...prev, category_id: newCat.id }));
+        addMsg("bot", `Categoria **${capText}** criada e selecionada!\n\nQual é a frequência de pagamento dessa recorrência?`, [
+           { label: "Mensal", action: "SELECT_REC_FREQ", data: "mensal" },
+           { label: "Semanal", action: "SELECT_REC_FREQ", data: "semanal" },
+           { label: "Anual", action: "SELECT_REC_FREQ", data: "anual" }
+        ]);
+        setBotState("WAITING_REC_FREQ"); 
+      } catch (e) {
+        addMsg("bot", "Erro ao criar categoria. Tente outro nome.");
+      } finally {
+        setLoading(false);
+      }
+      return;
+    }
+    
+    if (botState === "WAITING_REC_NEXT_RUN") {
+      let dateStr = "";
+      const lower = text.toLowerCase();
+      const today = new Date();
+      if (lower.includes("hoje")) {
+        dateStr = today.toISOString().split("T")[0];
+      } else if (lower.includes("amanhã") || lower.includes("amanha")) {
+        const t = new Date(today); t.setDate(t.getDate() + 1);
+        dateStr = t.toISOString().split("T")[0];
+      } else {
+        const parts = text.split("/");
+        if (parts.length >= 2) {
+          const d = parseInt(parts[0], 10);
+          const m = parseInt(parts[1], 10);
+          const y = parts[2] ? parseInt(parts[2], 10) : today.getFullYear();
+          if (!isNaN(d) && !isNaN(m)) {
+            const finalY = y < 100 ? 2000 + y : y;
+            const t = new Date(finalY, m - 1, d);
+            dateStr = t.toISOString().split("T")[0];
+          }
+        }
+      }
+      
+      if (!dateStr) {
+        addMsg("bot", "Data inválida. Tente 'hoje', 'amanhã' ou 'DD/MM':");
+        return;
+      }
+      
+      setLoading(true);
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) throw new Error("Usuário não autenticado");
+        const { error } = await supabase.from("recurrences").insert({
+          user_id: user.id,
+          type: draftTx.type as "entrada" | "saida",
+          name: draftTx.name || "Recorrência",
+          amount: draftTx.value || 0,
+          category_id: draftTx.category_id || null,
+          frequency: draftTx.status || "mensal", // We temporarily stored frequency in 'status'
+          next_run: dateStr,
+          active: true
+        });
+        if (error) throw error;
+        
+        qc.invalidateQueries({ queryKey: ["recurrences"] });
+        addMsg("bot", `Recorrência **${draftTx.name}** registrada com sucesso para começar em ${dateStr}!`, [
+           { label: "Voltar ao Menu Inicial", action: "BACK_TO_MENU" }
+        ]);
+        setBotState("FINISHED");
+      } catch (err: any) {
+        addMsg("bot", "Ocorreu um erro ao registrar a recorrência: " + err.message);
+      } finally {
+        setLoading(false);
+      }
       return;
     }
 

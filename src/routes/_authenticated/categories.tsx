@@ -22,8 +22,8 @@ function CategoriesPage() {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<any>(null);
   const [name, setName] = useState("");
-  const [color, setColor] = useState("#1e40af");
   const [type, setType] = useState<"entrada" | "saida">("saida");
+  const [color, setColor] = useState("#ef4444");
 
   const { data: cats = [] } = useQuery({
     queryKey: ["categories"],
@@ -42,7 +42,7 @@ function CategoriesPage() {
     if (res.error) return toast.error(res.error.message);
     await logActivity(editing ? "update" : "create", "category", res.data?.id, { name, type });
     toast.success(editing ? "Atualizado" : "Criado");
-    setOpen(false); setName(""); setEditing(null); setType("saida");
+    setOpen(false); setName(""); setEditing(null); setType("saida"); setColor("#ef4444");
     qc.invalidateQueries({ queryKey: ["categories"] });
   };
 
@@ -75,7 +75,7 @@ function CategoriesPage() {
           {cats.length === 0 && <Button variant="outline" onClick={seedDefaults}>Criar padrões</Button>}
           <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) { setName(""); setEditing(null); } }}>
             <DialogTrigger asChild>
-              <Button onClick={() => { setEditing(null); setName(""); setColor("#1e40af"); setType("saida"); }}><Plus className="h-4 w-4 mr-1" /> Nova categoria</Button>
+              <Button onClick={() => { setEditing(null); setName(""); setType("saida"); setColor("#ef4444"); }}><Plus className="h-4 w-4 mr-1" /> Nova categoria</Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader><DialogTitle>{editing ? "Editar" : "Nova"} categoria</DialogTitle></DialogHeader>
@@ -83,7 +83,10 @@ function CategoriesPage() {
                 <div className="space-y-2"><Label>Nome</Label><Input value={name} onChange={(e) => setName(e.target.value)} /></div>
                 <div className="space-y-2">
                   <Label>Tipo</Label>
-                  <Select value={type} onValueChange={(val: any) => setType(val)}>
+                  <Select value={type} onValueChange={(val: "entrada" | "saida") => { 
+                    setType(val); 
+                    if (!editing) setColor(val === "entrada" ? "#22c55e" : "#ef4444"); 
+                  }}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="entrada">Entrada (Receita)</SelectItem>
