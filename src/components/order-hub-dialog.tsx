@@ -19,12 +19,17 @@ import { formatBRL, formatDate } from "@/lib/format";
 import { toast } from "sonner";
 import { generateBudgetPDF } from "@/lib/pdf";
 import { logActivity } from "@/lib/logs";
+import { SendOrderDialog } from "@/components/send-order-dialog";
+import { OrderAttachments } from "@/components/order-attachments";
 
 type Item = { id?: string; description: string; quantity: number; unit_price: number; total: number };
 
 const statusOptions = [
   { value: "rascunho", label: "Rascunho", variant: "outline" as const },
   { value: "orcamento", label: "Orçamento gerado", variant: "secondary" as const },
+  { value: "orcamento_enviado", label: "Enviado", variant: "secondary" as const },
+  { value: "visualizado", label: "Visualizado", variant: "secondary" as const },
+  { value: "aguardando_retorno", label: "Aguardando retorno", variant: "secondary" as const },
   { value: "aprovado", label: "Aprovado", variant: "default" as const },
   { value: "cancelado", label: "Cancelado", variant: "destructive" as const },
 ];
