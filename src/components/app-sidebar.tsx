@@ -12,7 +12,7 @@ import { useCompanySettings } from "@/hooks/use-company-settings";
 
 const mainItems = [
   { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
-  { title: "Fiscal (NFe)", url: "/fiscal", icon: Receipt },
+  { title: "Fiscal", url: "/fiscal", icon: Receipt },
   { title: "Clientes", url: "/clients", icon: UserCircle },
   { title: "Pedidos", url: "/orders", icon: ClipboardList },
   { title: "Orçamentos", url: "/budgets", icon: FileText },

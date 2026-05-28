@@ -117,12 +117,8 @@ function NovaNotaFiscalPage() {
               )}
 
               <div className="flex justify-end pt-4">
-                <Button type="submit" disabled={emitirNFe.isPending || emitirNFSe.isPending} className="w-full sm:w-auto">
-                  {(emitirNFe.isPending || emitirNFSe.isPending) ? (
-                    "Processando envio..."
-                  ) : (
-                    <><Send className="h-4 w-4 mr-2" /> Emitir {tipo === "nfe" ? "NFe" : "NFS-e"}</>
-                  )}
+                <Button type="button" disabled={true} className="w-full sm:w-auto" title="O backend ainda não está configurado.">
+                  <Send className="h-4 w-4 mr-2" /> Emitir {tipo === "nfe" ? "NFe" : "NFS-e"}
                 </Button>
               </div>
 

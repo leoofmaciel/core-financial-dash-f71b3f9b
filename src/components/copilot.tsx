@@ -864,14 +864,13 @@ export function Copilot() {
                       {msg.options && msg.options.length > 0 && (
                         <div className="flex flex-col gap-1.5 mt-1">
                           {msg.options.map((opt, i) => (
-                            <Button 
+                            <div 
                               key={i} 
-                              variant={opt.primary ? "default" : "outline"} 
-                              className={cn("h-auto py-2 px-3 text-xs w-full justify-start text-left font-medium whitespace-normal border-primary/20", opt.primary ? "" : "bg-white dark:bg-slate-900 hover:bg-primary/5")}
+                              className="py-2 px-3 text-sm w-full text-left font-medium whitespace-normal bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg text-slate-600 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
                               onClick={() => processOption(opt)}
                             >
                               {opt.label}
-                            </Button>
+                            </div>
                           ))}
                         </div>
                       )}
