@@ -32,13 +32,30 @@ type BotState =
   | "WAITING_ITEM_QTD"
   | "WAITING_MORE"
   | "CONCLUDING"
-  | "FINISHED";
+  | "FINISHED"
+  | "CONFIRM_NEW_CLIENT"
+  | "ASK_MORE_DATA"
+  | "WAITING_NEW_CLIENT_PHONE"
+  | "WAITING_NEW_CLIENT_EMAIL"
+  | "WAITING_NEW_CLIENT_DOC"
+  | "WAITING_EXPENSE_DESC"
+  | "WAITING_EXPENSE_VALUE"
+  | "SELECTING_EXPENSE_CATEGORY"
+  | "WAITING_PAYMENT_SEARCH"
+  | "SELECTING_PENDING_PAYMENT"
+  | "SELECTING_PENDING_BUDGET";
 
 const initialMessage: Message = {
   id: "msg-1",
   sender: "bot",
-  text: "Olá! Sou seu assistente de vendas. Como posso te ajudar hoje?",
-  options: [{ label: "Criar Pedido Novo", action: "NEW_ORDER", primary: true }]
+  text: "Olá! Sou seu Assistente Financeiro. Escolha uma das tarefas abaixo ou digite o que precisa:",
+  options: [
+    { label: "Novo Pedido", action: "NEW_ORDER", primary: true },
+    { label: "Nova Despesa", action: "NEW_EXPENSE" },
+    { label: "Registrar Recebimento", action: "NEW_PAYMENT" },
+    { label: "Aprovar Orçamento", action: "APPROVE_BUDGET" },
+    { label: "Resumo do Mês", action: "MONTH_SUMMARY" }
+  ]
 };
 
 export function Copilot() {
@@ -52,9 +69,13 @@ export function Copilot() {
   // State Machine Variables
   const [botState, setBotState] = useState<BotState>("IDLE");
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
+  const [draftClientName, setDraftClientName] = useState("");
   const [items, setItems] = useState<Item[]>([]);
   const [currentItem, setCurrentItem] = useState<Partial<Item>>({});
   const [createdOrderId, setCreatedOrderId] = useState<string | null>(null);
+  
+  // Extra states
+  const [draftExpense, setDraftExpense] = useState<{name?: string, value?: number}>({});
 
   // Auto-scroll to bottom
   useEffect(() => {
@@ -70,10 +91,19 @@ export function Copilot() {
   const resetFlow = () => {
     setBotState("IDLE");
     setSelectedClient(null);
+    setDraftClientName("");
     setItems([]);
     setCurrentItem({});
     setCreatedOrderId(null);
     setMessages([initialMessage]);
+  };
+
+  const updateClientDB = async (payload: any) => {
+    if (!selectedClient) return;
+    try {
+      await supabase.from("clients").update(payload).eq("id", selectedClient.id);
+      setSelectedClient((prev) => prev ? { ...prev, ...payload } : null);
+    } catch (e) {}
   };
 
   const handleSend = async (text: string) => {
@@ -81,12 +111,31 @@ export function Copilot() {
     setInput("");
     addMsg("user", text.trim());
     
+    // Check for cancel keywords
+    const lowerText = text.trim().toLowerCase();
+    const cancelWords = ["cancelar", "cancela", "sair", "sai", "parar", "para", "abortar", "aborta", "desistir", "desiste", "voltar", "volta", "inicio", "início", "menu"];
+    if (cancelWords.includes(lowerText)) {
+      addMsg("bot", "Operação cancelada! Voltando ao menu inicial. Como mais posso te ajudar?", initialMessage.options);
+      setBotState("IDLE");
+      setSelectedClient(null);
+      setDraftClientName("");
+      setDraftExpense({});
+      setItems([]);
+      setCurrentItem({});
+      setCreatedOrderId(null);
+      return;
+    }
+    
     // Process input based on current state
     if (botState === "IDLE") {
-      if (text.toLowerCase().includes("pedido")) {
-        return processOption({ label: "Criar Pedido Novo", action: "NEW_ORDER" });
-      }
-      addMsg("bot", "Desculpe, ainda estou aprendendo. Por favor, escolha uma das opções abaixo.", [{ label: "Criar Pedido Novo", action: "NEW_ORDER", primary: true }]);
+      const lower = text.toLowerCase();
+      if (lower.includes("pedido") || lower.includes("orçamento")) return processOption({ label: "Criar Pedido Novo", action: "NEW_ORDER" });
+      if (lower.includes("despesa") || lower.includes("conta")) return processOption({ label: "Nova Despesa", action: "NEW_EXPENSE" });
+      if (lower.includes("pagamento") || lower.includes("recebimento") || lower.includes("baixa")) return processOption({ label: "Registrar Recebimento", action: "NEW_PAYMENT" });
+      if (lower.includes("aprovar") || lower.includes("orçamento")) return processOption({ label: "Aprovar Orçamento", action: "APPROVE_BUDGET" });
+      if (lower.includes("resumo") || lower.includes("mês")) return processOption({ label: "Resumo do Mês", action: "MONTH_SUMMARY" });
+      
+      addMsg("bot", "Desculpe, não entendi bem. Por favor, escolha uma das opções abaixo.", initialMessage.options);
       return;
     }
 
@@ -100,17 +149,107 @@ export function Copilot() {
       
       setLoading(false);
       if (!data || data.length === 0) {
-        addMsg("bot", `Não encontrei nenhum cliente parecido com "${text}". Pode tentar outro nome?`);
+        setDraftClientName(text);
+        addMsg("bot", `Não encontrei nenhum cliente com o nome "${text}". Gostaria de cadastrar como um novo cliente?`, [
+          { label: "Sim, cadastrar novo", action: "CREATE_CLIENT_YES", primary: true },
+          { label: "Não, buscar outro nome", action: "CREATE_CLIENT_NO" }
+        ]);
+        setBotState("CONFIRM_NEW_CLIENT");
       } else {
+        setDraftClientName(text);
         const opts = data.map((c) => ({ label: c.name, action: "SELECT_CLIENT", data: c }));
+        opts.push({ label: "Nenhum desses (Criar novo)", action: "CREATE_CLIENT_YES" });
         addMsg("bot", `Encontrei estes clientes. Qual deles é? (Selecione abaixo)`, opts);
         setBotState("SELECTING_CLIENT");
       }
       return;
     }
 
-    if (botState === "SELECTING_CLIENT") {
-      addMsg("bot", "Por favor, clique em um dos botões acima para selecionar o cliente.");
+    if (botState === "WAITING_NEW_CLIENT_PHONE") {
+      if (text.toLowerCase() !== "pular" && text.toLowerCase() !== "não" && text.toLowerCase() !== "nao") {
+        await updateClientDB({ phone: text });
+      }
+      addMsg("bot", `E qual é o e-mail? (ou digite "pular")`);
+      setBotState("WAITING_NEW_CLIENT_EMAIL");
+      return;
+    }
+
+    if (botState === "WAITING_NEW_CLIENT_EMAIL") {
+      if (text.toLowerCase() !== "pular" && text.toLowerCase() !== "não" && text.toLowerCase() !== "nao") {
+        await updateClientDB({ email: text });
+      }
+      addMsg("bot", `Para finalizar os dados dele, qual é o CPF ou CNPJ? (ou digite "pular")`);
+      setBotState("WAITING_NEW_CLIENT_DOC");
+      return;
+    }
+
+    if (botState === "WAITING_NEW_CLIENT_DOC") {
+      if (text.toLowerCase() !== "pular" && text.toLowerCase() !== "não" && text.toLowerCase() !== "nao") {
+        await updateClientDB({ cnpj: text });
+      }
+      addMsg("bot", `Perfeito! Dados do cliente salvos.\n\nAgora sim: qual é o nome do item ou serviço que será feito no pedido?`);
+      setBotState("WAITING_ITEM_DESC");
+      return;
+    }
+
+    if (botState === "SELECTING_CLIENT" || botState === "CONFIRM_NEW_CLIENT" || botState === "ASK_MORE_DATA" || botState === "SELECTING_EXPENSE_CATEGORY" || botState === "SELECTING_PENDING_PAYMENT" || botState === "SELECTING_PENDING_BUDGET") {
+      addMsg("bot", "Por favor, clique em um dos botões acima para continuar.");
+      return;
+    }
+
+    if (botState === "WAITING_EXPENSE_DESC") {
+      setDraftExpense({ name: text.trim() });
+      addMsg("bot", `Certo! Qual é o valor da despesa "${text.trim()}"? (Apenas números, ex: 150.50)`);
+      setBotState("WAITING_EXPENSE_VALUE");
+      return;
+    }
+
+    if (botState === "WAITING_EXPENSE_VALUE") {
+      const valStr = text.replace("R$", "").replace(/\./g, "").replace(",", ".").trim();
+      const val = parseFloat(valStr);
+      if (isNaN(val) || val <= 0) return addMsg("bot", "Por favor, digite um valor válido numérico.");
+      
+      setDraftExpense(prev => ({ ...prev, value: val }));
+      
+      setLoading(true);
+      const { data } = await supabase.from("categories").select("*").eq("type", "saida").order("name");
+      setLoading(false);
+      
+      if (!data || data.length === 0) {
+        addMsg("bot", "Não encontrei categorias cadastradas. Deseja registrar a despesa sem categoria?", [
+          { label: "Salvar sem categoria", action: "SAVE_EXPENSE", primary: true }
+        ]);
+      } else {
+        const opts = data.map((c: any) => ({ label: c.name, action: "SAVE_EXPENSE", data: c.id }));
+        opts.push({ label: "Sem categoria", action: "SAVE_EXPENSE" });
+        addMsg("bot", `Qual é a categoria dessa despesa? (Selecione abaixo)`, opts);
+      }
+      setBotState("SELECTING_EXPENSE_CATEGORY");
+      return;
+    }
+
+    if (botState === "WAITING_PAYMENT_SEARCH") {
+      setLoading(true);
+      const { data } = await supabase.from("transactions")
+        .select("*")
+        .eq("type", "entrada")
+        .neq("status", "pago")
+        .ilike("name", `%${text}%`)
+        .order("created_at", { ascending: false })
+        .limit(5);
+      setLoading(false);
+
+      if (!data || data.length === 0) {
+        addMsg("bot", `Não encontrei nenhuma conta a receber pendente com o termo "${text}". Pode tentar outro nome de cliente ou número de pedido?`);
+      } else {
+        const opts = data.map((tx: any) => ({ 
+          label: `${tx.name} - ${formatBRL(tx.amount)}`, 
+          action: "CONFIRM_PAYMENT", 
+          data: tx 
+        }));
+        addMsg("bot", `Encontrei estas contas pendentes. Qual delas o cliente pagou?`, opts);
+        setBotState("SELECTING_PENDING_PAYMENT");
+      }
       return;
     }
 
@@ -182,11 +321,190 @@ export function Copilot() {
       setBotState("WAITING_CLIENT_SEARCH");
     }
 
+    if (opt.action === "NEW_EXPENSE") {
+      addMsg("bot", "Ok, vamos registrar uma despesa. Qual é a descrição ou nome dessa despesa?");
+      setBotState("WAITING_EXPENSE_DESC");
+    }
+
+    if (opt.action === "SAVE_EXPENSE") {
+      setLoading(true);
+      const categoryId = opt.data;
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) throw new Error("Sem usuário");
+        const { error } = await supabase.from("transactions").insert({
+          user_id: user.id, name: draftExpense.name!, type: "saida",
+          amount: draftExpense.value!, category_id: categoryId || null,
+          status: "pago", transaction_date: new Date().toISOString().split("T")[0]
+        });
+        if (error) throw error;
+        qc.invalidateQueries({ queryKey: ["transactions"] });
+        qc.invalidateQueries({ queryKey: ["dashboard"] });
+        addMsg("bot", `Pronto! 🎉 A despesa **${draftExpense.name}** no valor de ${formatBRL(draftExpense.value!)} foi registrada e paga com sucesso no seu financeiro!`, [{ label: "Legal, voltar", action: "RESET_FLOW", primary: true }]);
+        setBotState("FINISHED");
+      } catch (e) {
+        addMsg("bot", "Erro ao salvar despesa. Tente novamente.");
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    if (opt.action === "NEW_PAYMENT") {
+      addMsg("bot", "Para registrar um recebimento, digite o nome do cliente ou o número do pedido que está pendente:");
+      setBotState("WAITING_PAYMENT_SEARCH");
+    }
+
+    if (opt.action === "CONFIRM_PAYMENT") {
+      setLoading(true);
+      const tx = opt.data;
+      try {
+        const { error } = await supabase.from("transactions").update({
+          status: "pago", transaction_date: new Date().toISOString().split("T")[0]
+        }).eq("id", tx.id);
+        if (error) throw error;
+        qc.invalidateQueries({ queryKey: ["transactions"] });
+        qc.invalidateQueries({ queryKey: ["dashboard"] });
+        addMsg("bot", `Sucesso! ✅ O pagamento de **${tx.name}** no valor de ${formatBRL(tx.amount)} foi registrado. O dinheiro já consta como recebido no seu caixa!`, [{ label: "Voltar ao Início", action: "RESET_FLOW", primary: true }]);
+        setBotState("FINISHED");
+      } catch (e) {
+        addMsg("bot", "Erro ao registrar pagamento.");
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    if (opt.action === "APPROVE_BUDGET") {
+      setLoading(true);
+      try {
+        const { data } = await supabase.from("orders")
+          .select("*, clients(name)")
+          .eq("status", "orcamento")
+          .order("created_at", { ascending: false })
+          .limit(5);
+        if (!data || data.length === 0) {
+           addMsg("bot", "Não encontrei nenhum orçamento aguardando aprovação no sistema.", [{ label: "Voltar ao Início", action: "RESET_FLOW", primary: true }]);
+           setBotState("FINISHED");
+        } else {
+           const opts = data.map((o: any) => ({
+             label: `Orçamento #${String(o.number).padStart(5,"0")} - ${o.clients?.name} (${formatBRL(o.total)})`,
+             action: "CONFIRM_BUDGET_APPROVAL",
+             data: o
+           }));
+           addMsg("bot", "Aqui estão os últimos orçamentos gerados. Qual deles o cliente aprovou?", opts);
+           setBotState("SELECTING_PENDING_BUDGET");
+        }
+      } catch (e) {} finally {
+        setLoading(false);
+      }
+    }
+
+    if (opt.action === "CONFIRM_BUDGET_APPROVAL") {
+      setLoading(true);
+      const o = opt.data;
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) throw new Error("Sem usuário");
+        const { error: txErr } = await supabase.from("transactions").insert({
+          user_id: user.id, order_id: o.id, name: `Pedido #${String(o.number).padStart(5,"0")} - ${o.clients?.name}`,
+          type: "entrada", amount: o.total, status: "pendente",
+          transaction_date: new Date().toISOString().split("T")[0]
+        });
+        if (txErr) throw txErr;
+        const { error: ordErr } = await supabase.from("orders").update({ status: "aprovado", approved_at: new Date().toISOString() }).eq("id", o.id);
+        if (ordErr) throw ordErr;
+        
+        qc.invalidateQueries({ queryKey: ["orders"] });
+        qc.invalidateQueries({ queryKey: ["transactions"] });
+        
+        addMsg("bot", `Show! 🎉 O Pedido #${String(o.number).padStart(5,"0")} foi APROVADO.\nA conta a receber no valor de ${formatBRL(o.total)} foi gerada automaticamente e está pendente no seu financeiro!`, [{ label: "Perfeito", action: "RESET_FLOW", primary: true }]);
+        setBotState("FINISHED");
+      } catch (e) {
+        addMsg("bot", "Erro ao aprovar orçamento.");
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    if (opt.action === "MONTH_SUMMARY") {
+      setLoading(true);
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) throw new Error("Sem usuário");
+        const date = new Date();
+        const firstDay = new Date(date.getFullYear(), date.getMonth(), 1).toISOString().split("T")[0];
+        const lastDay = new Date(date.getFullYear(), date.getMonth() + 1, 0).toISOString().split("T")[0];
+        
+        const { data: txs } = await supabase.from("transactions")
+          .select("type, amount")
+          .eq("user_id", user.id)
+          .eq("status", "pago")
+          .gte("transaction_date", firstDay)
+          .lte("transaction_date", lastDay);
+          
+        let inc = 0, exp = 0;
+        if (txs) {
+          txs.forEach((t: any) => t.type === "entrada" ? inc += t.amount : exp += t.amount);
+        }
+        
+        const { count: pendOrd } = await supabase.from("orders")
+          .select("*", { count: "exact", head: true })
+          .eq("user_id", user.id)
+          .eq("status", "orcamento");
+          
+        const saldo = inc - exp;
+        
+        addMsg("bot", `📈 **Resumo Financeiro deste Mês:**\n\n🟢 Receitas (pagas): ${formatBRL(inc)}\n🔴 Despesas (pagas): ${formatBRL(exp)}\n💰 Saldo Livre: **${formatBRL(saldo)}**\n\n📌 Além disso, você tem **${pendOrd || 0}** orçamento(s) aguardando aprovação dos clientes!`, [{ label: "Excelente! Voltar", action: "RESET_FLOW", primary: true }]);
+        setBotState("FINISHED");
+      } catch (e) {
+        addMsg("bot", "Erro ao calcular o resumo do mês.");
+      } finally {
+        setLoading(false);
+      }
+    }
+
     if (opt.action === "SELECT_CLIENT") {
       const c = opt.data as Client;
       setSelectedClient(c);
       addMsg("bot", `Cliente selecionado: **${c.name}**\n\nAgora, qual é o nome do item ou serviço que será feito?`);
       setBotState("WAITING_ITEM_DESC");
+    }
+
+    if (opt.action === "CREATE_CLIENT_NO") {
+      addMsg("bot", "Certo, digite outro nome para buscarmos novamente.");
+      setBotState("WAITING_CLIENT_SEARCH");
+    }
+
+    if (opt.action === "CREATE_CLIENT_YES") {
+      setLoading(true);
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) throw new Error("Sem usuário");
+        const { data: newC, error } = await supabase.from("clients").insert({
+          user_id: user.id, name: draftClientName
+        }).select().single();
+        if (error) throw error;
+        
+        setSelectedClient(newC);
+        addMsg("bot", `Cliente **${draftClientName}** cadastrado no sistema!\n\nVocê quer preencher outros dados dele agora (como telefone, e-mail, CPF/CNPJ) ou quer ir direto para o pedido?`, [
+          { label: "Ir direto para o pedido", action: "SKIP_CLIENT_DATA", primary: true },
+          { label: "Preencher mais dados", action: "FILL_CLIENT_DATA" }
+        ]);
+        setBotState("ASK_MORE_DATA");
+      } catch (err) {
+        addMsg("bot", "Erro ao criar cliente. Tente novamente.");
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    if (opt.action === "SKIP_CLIENT_DATA") {
+      addMsg("bot", `Certo!\n\nAgora, qual é o nome do item ou serviço que será feito no pedido?`);
+      setBotState("WAITING_ITEM_DESC");
+    }
+
+    if (opt.action === "FILL_CLIENT_DATA") {
+      addMsg("bot", `Qual é o telefone do cliente? (ou digite "pular" para não informar)`);
+      setBotState("WAITING_NEW_CLIENT_PHONE");
     }
 
     if (opt.action === "ADD_MORE_ITEMS") {
@@ -223,9 +541,9 @@ export function Copilot() {
         
         setCreatedOrderId(o.id);
         
-        addMsg("bot", `Sucesso! 🎉 O pedido #${String(o.number).padStart(5, "0")} foi salvo.\nO valor total ficou em ${formatBRL(total)}.\n\nO que você quer fazer agora?`, [
-          { label: "Gerar PDF do Orçamento", action: "GENERATE_BUDGET", primary: true },
-          { label: "Iniciar outro pedido", action: "RESET_FLOW" }
+        addMsg("bot", `Sucesso! 🎉 O pedido #${String(o.number).padStart(5, "0")} foi salvo no sistema.\nO valor total ficou em ${formatBRL(total)}.\n\nVocê gostaria de criar o Orçamento (em PDF) para esse pedido agora?`, [
+          { label: "Sim, gerar Orçamento", action: "GENERATE_BUDGET", primary: true },
+          { label: "Não, apenas salvar", action: "RESET_FLOW" }
         ]);
         setBotState("FINISHED");
       } catch (err: any) {
@@ -398,7 +716,7 @@ export function Copilot() {
                 type="submit" 
                 size="icon" 
                 className="rounded-full h-10 w-10 shrink-0 shadow-sm"
-                disabled={!input.trim() || loading || botState === "CONCLUDING" || botState === "SELECTING_CLIENT"}
+                disabled={!input.trim() || loading || ["CONCLUDING", "SELECTING_CLIENT", "CONFIRM_NEW_CLIENT", "ASK_MORE_DATA", "SELECTING_EXPENSE_CATEGORY", "SELECTING_PENDING_PAYMENT", "SELECTING_PENDING_BUDGET"].includes(botState)}
               >
                 <Send className="h-4 w-4" />
               </Button>
