@@ -447,6 +447,16 @@ export function OrderHubDialog({
           </div>
         </div>
       </DialogContent>
+      {currentId && (
+        <SendOrderDialog
+          open={sendOpen}
+          onOpenChange={setSendOpen}
+          orderId={currentId}
+          orderNumber={order.number}
+          total={total}
+          client={selectedClient ?? null}
+        />
+      )}
     </Dialog>
   );
 }
