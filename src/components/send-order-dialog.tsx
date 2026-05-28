@@ -71,8 +71,16 @@ export function SendOrderDialog({ open, onOpenChange, orderId, orderNumber, tota
           
           const { data } = await supabase.storage.from("attachments").createSignedUrl(fileName, 60 * 60 * 24 * 30);
           if (data?.signedUrl) {
-             setWaMsg(prev => prev.replace("[Gerando link do PDF... aguarde]", data.signedUrl));
-             setEmailBody(prev => prev.replace("[Gerando link do PDF... aguarde]", data.signedUrl));
+             let finalUrl = data.signedUrl;
+             try {
+                const tinyRes = await fetch(`https://tinyurl.com/api-create.php?url=${encodeURIComponent(data.signedUrl)}`);
+                if (tinyRes.ok) finalUrl = await tinyRes.text();
+             } catch (e) {
+                console.warn("Failed to shorten url", e);
+             }
+             
+             setWaMsg(prev => prev.replace("[Gerando link do PDF... aguarde]", finalUrl));
+             setEmailBody(prev => prev.replace("[Gerando link do PDF... aguarde]", finalUrl));
           }
         } catch (err) {
            console.error("Error generating pdf link in dialog", err);

@@ -132,7 +132,13 @@ function BudgetEditor() {
           const { data } = await supabase.storage.from("attachments").createSignedUrl(fileName, 60 * 60 * 24 * 30); // 30 dias
           if (!data?.signedUrl) throw new Error("Não foi possível gerar a URL");
           
-          await navigator.clipboard.writeText(data.signedUrl);
+          let finalUrl = data.signedUrl;
+          try {
+             const tinyRes = await fetch(`https://tinyurl.com/api-create.php?url=${encodeURIComponent(data.signedUrl)}`);
+             if (tinyRes.ok) finalUrl = await tinyRes.text();
+          } catch(e) {}
+          
+          await navigator.clipboard.writeText(finalUrl);
           toast.success("Link gerado e copiado para a área de transferência!");
         } catch (error: any) {
           toast.error("Erro ao gerar link: " + error.message);
@@ -151,7 +157,13 @@ function BudgetEditor() {
           const { data } = await supabase.storage.from("attachments").createSignedUrl(fileName, 60 * 60 * 24 * 30); // 30 dias
           if (!data?.signedUrl) throw new Error("Não foi possível gerar a URL");
           
-          let text = `Olá ${budget.client_name}, tudo bem?\nSegue o link para o orçamento solicitado:\n\n📄 *Orçamento Nº ${String(budget.number ?? b!.number).padStart(5, "0")}*\nValor Total: ${formatBRL(total)}\n\nAcesse o PDF aqui: ${data.signedUrl}\n\nQualquer dúvida, estou à disposição!`;
+          let finalUrl = data.signedUrl;
+          try {
+             const tinyRes = await fetch(`https://tinyurl.com/api-create.php?url=${encodeURIComponent(data.signedUrl)}`);
+             if (tinyRes.ok) finalUrl = await tinyRes.text();
+          } catch(e) {}
+          
+          let text = `Olá ${budget.client_name}, tudo bem?\nSegue o link para o orçamento solicitado:\n\n📄 *Orçamento Nº ${String(budget.number ?? b!.number).padStart(5, "0")}*\nValor Total: ${formatBRL(total)}\n\nAcesse o PDF aqui: ${finalUrl}\n\nQualquer dúvida, estou à disposição!`;
           
           let phoneStr = budget.client_phone ? budget.client_phone.replace(/\D/g, '') : '';
           if (phoneStr && phoneStr.length >= 10 && !phoneStr.startsWith('55')) {

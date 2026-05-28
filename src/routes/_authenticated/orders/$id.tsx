@@ -205,7 +205,13 @@ function OrderEditor() {
       const { data } = await supabase.storage.from("attachments").createSignedUrl(fileName, 60 * 60 * 24 * 30);
       if (!data?.signedUrl) throw new Error("Não foi possível gerar a URL");
       
-      let text = `Olá ${selectedClient.name}, tudo bem?\nSegue o link para o orçamento solicitado referente ao Pedido #${String(order.number ?? "").padStart(5, "0")}:\n\n📄 *Orçamento Nº ${String(b!.number).padStart(5, "0")}*\nValor Total: ${formatBRL(total)}\n\nAcesse o PDF aqui: ${data.signedUrl}\n\nQualquer dúvida, estou à disposição!`;
+      let finalUrl = data.signedUrl;
+      try {
+         const tinyRes = await fetch(`https://tinyurl.com/api-create.php?url=${encodeURIComponent(data.signedUrl)}`);
+         if (tinyRes.ok) finalUrl = await tinyRes.text();
+      } catch(e) {}
+      
+      let text = `Olá ${selectedClient.name}, tudo bem?\nSegue o link para o orçamento solicitado referente ao Pedido #${String(order.number ?? "").padStart(5, "0")}:\n\n📄 *Orçamento Nº ${String(b!.number).padStart(5, "0")}*\nValor Total: ${formatBRL(total)}\n\nAcesse o PDF aqui: ${finalUrl}\n\nQualquer dúvida, estou à disposição!`;
       
       let phoneStr = selectedClient.phone ? selectedClient.phone.replace(/\D/g, '') : '';
       if (phoneStr && phoneStr.length >= 10 && !phoneStr.startsWith('55')) {
