@@ -30,15 +30,18 @@ const settingsItems = [
 ];
 
 export function AppSidebar({ isAdmin }: { isAdmin: boolean }) {
-  const { state } = useSidebar();
+  const { state, isMobile, setOpenMobile } = useSidebar();
   const collapsed = state === "collapsed";
   const path = useRouterState({ select: (r) => r.location.pathname });
   const navigate = useNavigate();
+
+  const closeOnMobile = () => { if (isMobile) setOpenMobile(false); };
 
   const logout = async () => {
     await supabase.auth.signOut();
     navigate({ to: "/login" });
   };
+
 
   return (
     <Sidebar collapsible="icon">
@@ -64,7 +67,7 @@ export function AppSidebar({ isAdmin }: { isAdmin: boolean }) {
               {mainItems.map((item) => (
                 <SidebarMenuItem key={item.url}>
                   <SidebarMenuButton asChild isActive={path.startsWith(item.url)}>
-                    <Link to={item.url}>
+                    <Link to={item.url} onClick={closeOnMobile}>
                       <item.icon />
                       <span>{item.title}</span>
                     </Link>
@@ -82,7 +85,7 @@ export function AppSidebar({ isAdmin }: { isAdmin: boolean }) {
               {settingsItems.filter((i) => !i.adminOnly || isAdmin).map((item) => (
                 <SidebarMenuItem key={item.url}>
                   <SidebarMenuButton asChild isActive={path.startsWith(item.url)}>
-                    <Link to={item.url}>
+                    <Link to={item.url} onClick={closeOnMobile}>
                       <item.icon />
                       <span>{item.title}</span>
                     </Link>
