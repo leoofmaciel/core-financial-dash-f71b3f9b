@@ -41,6 +41,7 @@ type BotState =
   | "WAITING_TX_DESC"
   | "WAITING_TX_VALUE"
   | "SELECTING_TX_CATEGORY"
+  | "WAITING_NEW_CATEGORY_NAME"
   | "WAITING_TX_DUE_DATE"
   | "WAITING_PAYMENT_SEARCH"
   | "SELECTING_PENDING_PAYMENT"
@@ -213,21 +214,39 @@ export function Copilot() {
       setDraftTx(prev => ({ ...prev, value: val }));
       
       setLoading(true);
-      // use the draftTx.type to fetch categories
-      const currentType = draftTx.type || "saida";
-      const { data } = await supabase.from("categories").select("*").eq("type", currentType).order("name");
+      const { data } = await supabase.from("categories").select("*").order("name");
       setLoading(false);
       
-      if (!data || data.length === 0) {
-        addMsg("bot", "Não encontrei categorias cadastradas. Deseja registrar sem categoria?", [
-          { label: "Seguir sem categoria", action: "SELECT_TX_CATEGORY", primary: true }
-        ]);
-      } else {
-        const opts = data.map((c: any) => ({ label: c.name, action: "SELECT_TX_CATEGORY", data: c.id }));
-        opts.push({ label: "Sem categoria", action: "SELECT_TX_CATEGORY" });
-        addMsg("bot", `Qual é a categoria? (Selecione abaixo)`, opts);
-      }
+      const opts = (data || []).map((c: any) => ({ label: c.name, action: "SELECT_TX_CATEGORY", data: c.id }));
+      opts.push({ label: "➕ Criar Nova", action: "CREATE_NEW_CATEGORY" });
+      opts.push({ label: "Sem categoria", action: "SELECT_TX_CATEGORY" });
+      addMsg("bot", `Qual é a categoria? (Selecione abaixo)`, opts);
       setBotState("SELECTING_TX_CATEGORY");
+      return;
+    }
+
+    if (botState === "WAITING_NEW_CATEGORY_NAME") {
+      setLoading(true);
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) throw new Error("Sem usuário");
+        const { data: newCat, error } = await supabase.from("categories").insert({
+          user_id: user.id, name: text.trim(), color: "#3b82f6"
+        }).select().single();
+        if (error) throw error;
+        
+        qc.invalidateQueries({ queryKey: ["categories"] });
+        setDraftTx(prev => ({ ...prev, category_id: newCat.id }));
+        addMsg("bot", `Categoria **${text.trim()}** criada e selecionada!\n\nAgora, qual é o status atual dessa movimentação?`, [
+           { label: "Já está Paga / Recebida", action: "SELECT_TX_STATUS", data: "pago", primary: true },
+           { label: "Pendente (A vencer)", action: "SELECT_TX_STATUS", data: "pendente" }
+        ]);
+        setBotState("SELECTING_TX_CATEGORY"); // We reuse SELECTING_TX_CATEGORY to block text input, while waiting for SELECT_TX_STATUS click
+      } catch (e) {
+        addMsg("bot", "Erro ao criar categoria. Tente outro nome.");
+      } finally {
+        setLoading(false);
+      }
       return;
     }
 
@@ -383,10 +402,15 @@ export function Copilot() {
 
     if (opt.action === "SELECT_TX_CATEGORY") {
       setDraftTx(prev => ({ ...prev, category_id: opt.data }));
-      addMsg("bot", "Qual é o status atual dessa conta?", [
+      addMsg("bot", "Qual é o status atual dessa movimentação?", [
          { label: "Já está Paga / Recebida", action: "SELECT_TX_STATUS", data: "pago", primary: true },
          { label: "Pendente (A vencer)", action: "SELECT_TX_STATUS", data: "pendente" }
       ]);
+    }
+
+    if (opt.action === "CREATE_NEW_CATEGORY") {
+      addMsg("bot", "Certo, digite o nome para a nova categoria:");
+      setBotState("WAITING_NEW_CATEGORY_NAME");
     }
 
     if (opt.action === "SELECT_TX_STATUS") {
