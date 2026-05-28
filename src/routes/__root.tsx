@@ -1,5 +1,4 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { GoogleOAuthProvider } from "@react-oauth/google";
 import {
   Outlet,
   Link,
@@ -82,9 +81,8 @@ function RootShell({ children }: { children: React.ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
-  const clientId = typeof window !== "undefined" ? localStorage.getItem("google_client_id") : null;
   
-  const content = (
+  return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <Outlet />
@@ -92,9 +90,4 @@ function RootComponent() {
       </TooltipProvider>
     </QueryClientProvider>
   );
-
-  if (clientId) {
-    return <GoogleOAuthProvider clientId={clientId}>{content}</GoogleOAuthProvider>;
-  }
-  return content;
 }

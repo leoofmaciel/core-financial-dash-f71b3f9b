@@ -7,7 +7,32 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { Upload, Mail } from "lucide-react";
-import { useGoogleLogin } from "@react-oauth/google";
+import { useGoogleLogin, GoogleOAuthProvider } from "@react-oauth/google";
+
+function GoogleConnectButton({ onConnect, onDisconnect, connected }: { onConnect: (token: string) => void, onDisconnect: () => void, connected: boolean }) {
+  const loginWithGoogle = useGoogleLogin({
+    onSuccess: (tokenResponse) => onConnect(tokenResponse.access_token),
+    onError: (error) => toast.error("Erro ao conectar ao Google: " + error),
+    scope: "https://www.googleapis.com/auth/gmail.send",
+  });
+
+  if (connected) {
+    return (
+      <>
+        <div className="flex items-center text-sm font-medium text-green-600 bg-green-50 px-3 py-1.5 rounded-md border border-green-200">
+          <Mail className="h-4 w-4 mr-2" /> Gmail Conectado
+        </div>
+        <Button variant="outline" size="sm" onClick={onDisconnect}>Desconectar</Button>
+      </>
+    );
+  }
+
+  return (
+    <Button variant="outline" onClick={() => loginWithGoogle()}>
+      <Mail className="h-4 w-4 mr-2" /> Conectar Gmail
+    </Button>
+  );
+}
 
 export const Route = createFileRoute("/_authenticated/settings")({ component: SettingsPage });
 
@@ -37,29 +62,11 @@ function SettingsPage() {
     const currentClientId = localStorage.getItem("google_client_id") || "";
     if (googleClientId !== currentClientId) {
       localStorage.setItem("google_client_id", googleClientId);
-      toast.success("Configurações salvas! Recarregando para aplicar integração...");
-      setTimeout(() => window.location.reload(), 1000);
+      toast.success("Configurações salvas! Client ID atualizado.");
       return;
     }
     
     toast.success("Configurações salvas");
-  };
-
-  // Google Login hook handles the popup flow
-  const loginWithGoogle = useGoogleLogin({
-    onSuccess: (tokenResponse) => {
-      localStorage.setItem("gmail_access_token", tokenResponse.access_token);
-      setGmailToken(tokenResponse.access_token);
-      toast.success("Conectado ao Gmail com sucesso!");
-    },
-    onError: (error) => toast.error("Erro ao conectar ao Google: " + error),
-    scope: "https://www.googleapis.com/auth/gmail.send",
-  });
-
-  const disconnectGmail = () => {
-    localStorage.removeItem("gmail_access_token");
-    setGmailToken("");
-    toast.success("Desconectado do Gmail");
   };
 
   const uploadLogo = async (file: File) => {
@@ -128,18 +135,21 @@ function SettingsPage() {
           
           {googleClientId && (
             <div className="pt-2 flex items-center gap-3">
-              {gmailToken ? (
-                <>
-                  <div className="flex items-center text-sm font-medium text-green-600 bg-green-50 px-3 py-1.5 rounded-md border border-green-200">
-                    <Mail className="h-4 w-4 mr-2" /> Gmail Conectado
-                  </div>
-                  <Button variant="outline" size="sm" onClick={disconnectGmail}>Desconectar</Button>
-                </>
-              ) : (
-                <Button variant="outline" onClick={() => loginWithGoogle()}>
-                  <Mail className="h-4 w-4 mr-2" /> Conectar Gmail
-                </Button>
-              )}
+              <GoogleOAuthProvider clientId={googleClientId}>
+                <GoogleConnectButton 
+                  connected={!!gmailToken}
+                  onConnect={(token) => {
+                    localStorage.setItem("gmail_access_token", token);
+                    setGmailToken(token);
+                    toast.success("Conectado ao Gmail com sucesso!");
+                  }}
+                  onDisconnect={() => {
+                    localStorage.removeItem("gmail_access_token");
+                    setGmailToken("");
+                    toast.success("Desconectado do Gmail");
+                  }}
+                />
+              </GoogleOAuthProvider>
             </div>
           )}
         </CardContent>
