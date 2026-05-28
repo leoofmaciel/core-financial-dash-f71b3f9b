@@ -38,9 +38,10 @@ type BotState =
   | "WAITING_NEW_CLIENT_PHONE"
   | "WAITING_NEW_CLIENT_EMAIL"
   | "WAITING_NEW_CLIENT_DOC"
-  | "WAITING_EXPENSE_DESC"
-  | "WAITING_EXPENSE_VALUE"
-  | "SELECTING_EXPENSE_CATEGORY"
+  | "WAITING_TX_DESC"
+  | "WAITING_TX_VALUE"
+  | "SELECTING_TX_CATEGORY"
+  | "WAITING_TX_DUE_DATE"
   | "WAITING_PAYMENT_SEARCH"
   | "SELECTING_PENDING_PAYMENT"
   | "SELECTING_PENDING_BUDGET";
@@ -51,7 +52,7 @@ const initialMessage: Message = {
   text: "Olá! Sou seu Assistente Financeiro. Escolha uma das tarefas abaixo ou digite o que precisa:",
   options: [
     { label: "Novo Pedido", action: "NEW_ORDER", primary: true },
-    { label: "Nova Despesa", action: "NEW_EXPENSE" },
+    { label: "Nova Movimentação", action: "NEW_TRANSACTION" },
     { label: "Registrar Recebimento", action: "NEW_PAYMENT" },
     { label: "Aprovar Orçamento", action: "APPROVE_BUDGET" },
     { label: "Resumo do Mês", action: "MONTH_SUMMARY" }
@@ -75,7 +76,7 @@ export function Copilot() {
   const [createdOrderId, setCreatedOrderId] = useState<string | null>(null);
   
   // Extra states
-  const [draftExpense, setDraftExpense] = useState<{name?: string, value?: number}>({});
+  const [draftTx, setDraftTx] = useState<{type?: string, name?: string, value?: number, category_id?: string, status?: string, due_date?: string}>({});
 
   // Auto-scroll to bottom
   useEffect(() => {
@@ -119,7 +120,7 @@ export function Copilot() {
       setBotState("IDLE");
       setSelectedClient(null);
       setDraftClientName("");
-      setDraftExpense({});
+      setDraftTx({});
       setItems([]);
       setCurrentItem({});
       setCreatedOrderId(null);
@@ -130,7 +131,7 @@ export function Copilot() {
     if (botState === "IDLE") {
       const lower = text.toLowerCase();
       if (lower.includes("pedido") || lower.includes("orçamento")) return processOption({ label: "Criar Pedido Novo", action: "NEW_ORDER" });
-      if (lower.includes("despesa") || lower.includes("conta")) return processOption({ label: "Nova Despesa", action: "NEW_EXPENSE" });
+      if (lower.includes("despesa") || lower.includes("conta") || lower.includes("receita") || lower.includes("movimentação") || lower.includes("movimentacao")) return processOption({ label: "Nova Movimentação", action: "NEW_TRANSACTION" });
       if (lower.includes("pagamento") || lower.includes("recebimento") || lower.includes("baixa")) return processOption({ label: "Registrar Recebimento", action: "NEW_PAYMENT" });
       if (lower.includes("aprovar") || lower.includes("orçamento")) return processOption({ label: "Aprovar Orçamento", action: "APPROVE_BUDGET" });
       if (lower.includes("resumo") || lower.includes("mês")) return processOption({ label: "Resumo do Mês", action: "MONTH_SUMMARY" });
@@ -192,39 +193,84 @@ export function Copilot() {
       return;
     }
 
-    if (botState === "SELECTING_CLIENT" || botState === "CONFIRM_NEW_CLIENT" || botState === "ASK_MORE_DATA" || botState === "SELECTING_EXPENSE_CATEGORY" || botState === "SELECTING_PENDING_PAYMENT" || botState === "SELECTING_PENDING_BUDGET") {
+    if (botState === "SELECTING_CLIENT" || botState === "CONFIRM_NEW_CLIENT" || botState === "ASK_MORE_DATA" || botState === "SELECTING_TX_CATEGORY" || botState === "SELECTING_PENDING_PAYMENT" || botState === "SELECTING_PENDING_BUDGET") {
       addMsg("bot", "Por favor, clique em um dos botões acima para continuar.");
       return;
     }
 
-    if (botState === "WAITING_EXPENSE_DESC") {
-      setDraftExpense({ name: text.trim() });
-      addMsg("bot", `Certo! Qual é o valor da despesa "${text.trim()}"? (Apenas números, ex: 150.50)`);
-      setBotState("WAITING_EXPENSE_VALUE");
+    if (botState === "WAITING_TX_DESC") {
+      setDraftTx(prev => ({ ...prev, name: text.trim() }));
+      addMsg("bot", `Certo! Qual é o valor dessa movimentação ("${text.trim()}")? (Apenas números, ex: 150.50)`);
+      setBotState("WAITING_TX_VALUE");
       return;
     }
 
-    if (botState === "WAITING_EXPENSE_VALUE") {
+    if (botState === "WAITING_TX_VALUE") {
       const valStr = text.replace("R$", "").replace(/\./g, "").replace(",", ".").trim();
       const val = parseFloat(valStr);
-      if (isNaN(val) || val <= 0) return addMsg("bot", "Por favor, digite um valor válido numérico.");
+      if (isNaN(val) || val <= 0) return addMsg("bot", "Por favor, digite um valor numérico válido.");
       
-      setDraftExpense(prev => ({ ...prev, value: val }));
+      setDraftTx(prev => ({ ...prev, value: val }));
       
       setLoading(true);
-      const { data } = await supabase.from("categories").select("*").eq("type", "saida").order("name");
+      // use the draftTx.type to fetch categories
+      const currentType = draftTx.type || "saida";
+      const { data } = await supabase.from("categories").select("*").eq("type", currentType).order("name");
       setLoading(false);
       
       if (!data || data.length === 0) {
-        addMsg("bot", "Não encontrei categorias cadastradas. Deseja registrar a despesa sem categoria?", [
-          { label: "Salvar sem categoria", action: "SAVE_EXPENSE", primary: true }
+        addMsg("bot", "Não encontrei categorias cadastradas. Deseja registrar sem categoria?", [
+          { label: "Seguir sem categoria", action: "SELECT_TX_CATEGORY", primary: true }
         ]);
       } else {
-        const opts = data.map((c: any) => ({ label: c.name, action: "SAVE_EXPENSE", data: c.id }));
-        opts.push({ label: "Sem categoria", action: "SAVE_EXPENSE" });
-        addMsg("bot", `Qual é a categoria dessa despesa? (Selecione abaixo)`, opts);
+        const opts = data.map((c: any) => ({ label: c.name, action: "SELECT_TX_CATEGORY", data: c.id }));
+        opts.push({ label: "Sem categoria", action: "SELECT_TX_CATEGORY" });
+        addMsg("bot", `Qual é a categoria? (Selecione abaixo)`, opts);
       }
-      setBotState("SELECTING_EXPENSE_CATEGORY");
+      setBotState("SELECTING_TX_CATEGORY");
+      return;
+    }
+
+    if (botState === "WAITING_TX_DUE_DATE") {
+      let dateIso = new Date().toISOString().split("T")[0];
+      const lText = text.toLowerCase();
+      if (lText.includes("amanhã") || lText.includes("amanha")) {
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        dateIso = tomorrow.toISOString().split("T")[0];
+      } else if (text.includes("/")) {
+        const parts = text.split("/");
+        const d = parseInt(parts[0]);
+        const m = parseInt(parts[1]) - 1;
+        let y = parts.length === 3 ? parseInt(parts[2]) : new Date().getFullYear();
+        if (y < 100) y += 2000;
+        if (!isNaN(d) && !isNaN(m)) {
+           dateIso = new Date(y, m, d).toISOString().split("T")[0];
+        }
+      }
+
+      setLoading(true);
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) throw new Error("Sem usuário");
+        const { error } = await supabase.from("transactions").insert({
+          user_id: user.id, name: draftTx.name!, type: draftTx.type || "saida",
+          amount: draftTx.value!, category_id: draftTx.category_id || null,
+          status: draftTx.status || "pendente", 
+          transaction_date: draftTx.status === "pago" ? new Date().toISOString().split("T")[0] : null,
+          due_date: dateIso
+        });
+        if (error) throw error;
+        qc.invalidateQueries({ queryKey: ["transactions"] });
+        qc.invalidateQueries({ queryKey: ["dashboard"] });
+        addMsg("bot", `Pronto! 🎉 A movimentação **${draftTx.name}** no valor de ${formatBRL(draftTx.value!)} foi salva no seu financeiro!`, [{ label: "Fazer mais alguma coisa", action: "RESET_FLOW", primary: true }]);
+        setBotState("FINISHED");
+      } catch (e) {
+        addMsg("bot", "Erro ao salvar a movimentação. Tente novamente.");
+        setBotState("FINISHED");
+      } finally {
+        setLoading(false);
+      }
       return;
     }
 
@@ -321,32 +367,32 @@ export function Copilot() {
       setBotState("WAITING_CLIENT_SEARCH");
     }
 
-    if (opt.action === "NEW_EXPENSE") {
-      addMsg("bot", "Ok, vamos registrar uma despesa. Qual é a descrição ou nome dessa despesa?");
-      setBotState("WAITING_EXPENSE_DESC");
+    if (opt.action === "NEW_TRANSACTION") {
+      addMsg("bot", "Vamos registrar uma nova movimentação. Ela é uma Entrada (recebimento) ou uma Saída (despesa)?", [
+        { label: "Entrada (Receita)", action: "SELECT_TX_TYPE", data: "entrada", primary: true },
+        { label: "Saída (Despesa)", action: "SELECT_TX_TYPE", data: "saida" }
+      ]);
+    }
+    
+    if (opt.action === "SELECT_TX_TYPE") {
+      const txType = opt.data;
+      setDraftTx({ type: txType });
+      addMsg("bot", `Ok, será uma **${txType === 'entrada' ? 'Entrada' : 'Saída'}**.\nQual é a descrição ou nome dessa movimentação?`);
+      setBotState("WAITING_TX_DESC");
     }
 
-    if (opt.action === "SAVE_EXPENSE") {
-      setLoading(true);
-      const categoryId = opt.data;
-      try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) throw new Error("Sem usuário");
-        const { error } = await supabase.from("transactions").insert({
-          user_id: user.id, name: draftExpense.name!, type: "saida",
-          amount: draftExpense.value!, category_id: categoryId || null,
-          status: "pago", transaction_date: new Date().toISOString().split("T")[0]
-        });
-        if (error) throw error;
-        qc.invalidateQueries({ queryKey: ["transactions"] });
-        qc.invalidateQueries({ queryKey: ["dashboard"] });
-        addMsg("bot", `Pronto! 🎉 A despesa **${draftExpense.name}** no valor de ${formatBRL(draftExpense.value!)} foi registrada e paga com sucesso no seu financeiro!`, [{ label: "Legal, voltar", action: "RESET_FLOW", primary: true }]);
-        setBotState("FINISHED");
-      } catch (e) {
-        addMsg("bot", "Erro ao salvar despesa. Tente novamente.");
-      } finally {
-        setLoading(false);
-      }
+    if (opt.action === "SELECT_TX_CATEGORY") {
+      setDraftTx(prev => ({ ...prev, category_id: opt.data }));
+      addMsg("bot", "Qual é o status atual dessa conta?", [
+         { label: "Já está Paga / Recebida", action: "SELECT_TX_STATUS", data: "pago", primary: true },
+         { label: "Pendente (A vencer)", action: "SELECT_TX_STATUS", data: "pendente" }
+      ]);
+    }
+
+    if (opt.action === "SELECT_TX_STATUS") {
+      setDraftTx(prev => ({ ...prev, status: opt.data }));
+      addMsg("bot", "Qual é a data de vencimento?\n*(Você pode digitar 'hoje', 'amanhã', ou uma data como '15/10')*");
+      setBotState("WAITING_TX_DUE_DATE");
     }
 
     if (opt.action === "NEW_PAYMENT") {
@@ -716,7 +762,7 @@ export function Copilot() {
                 type="submit" 
                 size="icon" 
                 className="rounded-full h-10 w-10 shrink-0 shadow-sm"
-                disabled={!input.trim() || loading || ["CONCLUDING", "SELECTING_CLIENT", "CONFIRM_NEW_CLIENT", "ASK_MORE_DATA", "SELECTING_EXPENSE_CATEGORY", "SELECTING_PENDING_PAYMENT", "SELECTING_PENDING_BUDGET"].includes(botState)}
+                disabled={!input.trim() || loading || ["CONCLUDING", "SELECTING_CLIENT", "CONFIRM_NEW_CLIENT", "ASK_MORE_DATA", "SELECTING_TX_CATEGORY", "SELECTING_PENDING_PAYMENT", "SELECTING_PENDING_BUDGET"].includes(botState)}
               >
                 <Send className="h-4 w-4" />
               </Button>
