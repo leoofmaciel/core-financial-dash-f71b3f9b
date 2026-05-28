@@ -13,6 +13,7 @@ import { formatBRL, formatDate } from "@/lib/format";
 import { toast } from "sonner";
 import { generateBudgetPDF } from "@/lib/pdf";
 import { logActivity } from "@/lib/logs";
+import { shortenUrl } from "@/lib/shortener";
 
 export const Route = createFileRoute("/_authenticated/orders/$id")({ component: OrderEditor });
 
@@ -205,11 +206,7 @@ function OrderEditor() {
       const { data } = await supabase.storage.from("attachments").createSignedUrl(fileName, 60 * 60 * 24 * 30);
       if (!data?.signedUrl) throw new Error("Não foi possível gerar a URL");
       
-      let finalUrl = data.signedUrl;
-      try {
-         const tinyRes = await fetch(`https://tinyurl.com/api-create.php?url=${encodeURIComponent(data.signedUrl)}`);
-         if (tinyRes.ok) finalUrl = await tinyRes.text();
-      } catch(e) {}
+      const finalUrl = await shortenUrl(data.signedUrl);
       
       let text = `Olá ${selectedClient.name}, tudo bem?\nSegue o link para o orçamento solicitado referente ao Pedido #${String(order.number ?? "").padStart(5, "0")}:\n\n📄 *Orçamento Nº ${String(b!.number).padStart(5, "0")}*\nValor Total: ${formatBRL(total)}\n\nAcesse o PDF aqui: ${finalUrl}\n\nQualquer dúvida, estou à disposição!`;
       

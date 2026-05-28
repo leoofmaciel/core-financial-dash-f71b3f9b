@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import { formatBRL } from "@/lib/format";
 import { generateBudgetPDF } from "@/lib/pdf";
 import { logActivity } from "@/lib/logs";
+import { shortenUrl } from "@/lib/shortener";
 
 type Props = {
   open: boolean;
@@ -71,13 +72,7 @@ export function SendOrderDialog({ open, onOpenChange, orderId, orderNumber, tota
           
           const { data } = await supabase.storage.from("attachments").createSignedUrl(fileName, 60 * 60 * 24 * 30);
           if (data?.signedUrl) {
-             let finalUrl = data.signedUrl;
-             try {
-                const tinyRes = await fetch(`https://tinyurl.com/api-create.php?url=${encodeURIComponent(data.signedUrl)}`);
-                if (tinyRes.ok) finalUrl = await tinyRes.text();
-             } catch (e) {
-                console.warn("Failed to shorten url", e);
-             }
+             const finalUrl = await shortenUrl(data.signedUrl);
              
              setWaMsg(prev => prev.replace("[Gerando link do PDF... aguarde]", finalUrl));
              setEmailBody(prev => prev.replace("[Gerando link do PDF... aguarde]", finalUrl));
