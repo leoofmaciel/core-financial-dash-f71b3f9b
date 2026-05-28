@@ -19,12 +19,17 @@ import { formatBRL, formatDate } from "@/lib/format";
 import { toast } from "sonner";
 import { generateBudgetPDF } from "@/lib/pdf";
 import { logActivity } from "@/lib/logs";
+import { SendOrderDialog } from "@/components/send-order-dialog";
+import { OrderAttachments } from "@/components/order-attachments";
 
 type Item = { id?: string; description: string; quantity: number; unit_price: number; total: number };
 
 const statusOptions = [
   { value: "rascunho", label: "Rascunho", variant: "outline" as const },
   { value: "orcamento", label: "Orçamento gerado", variant: "secondary" as const },
+  { value: "orcamento_enviado", label: "Enviado", variant: "secondary" as const },
+  { value: "visualizado", label: "Visualizado", variant: "secondary" as const },
+  { value: "aguardando_retorno", label: "Aguardando retorno", variant: "secondary" as const },
   { value: "aprovado", label: "Aprovado", variant: "default" as const },
   { value: "cancelado", label: "Cancelado", variant: "destructive" as const },
 ];
@@ -47,6 +52,7 @@ export function OrderHubDialog({
   const [saving, setSaving] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [dirty, setDirty] = useState(false);
+  const [sendOpen, setSendOpen] = useState(false);
   const skipAutoSave = useRef(true);
 
   useEffect(() => {
@@ -392,7 +398,7 @@ export function OrderHubDialog({
                   <Button size="sm" variant="outline" className="w-full justify-start" onClick={generatePDF} disabled={order.status === "aprovado"}>
                     <FileText className="h-3.5 w-3.5 mr-2" /> Gerar orçamento (PDF)
                   </Button>
-                  <Button size="sm" variant="outline" className="w-full justify-start" disabled title="Em breve">
+                  <Button size="sm" variant="outline" className="w-full justify-start" onClick={() => currentId ? setSendOpen(true) : toast.error("Salve o pedido primeiro")}>
                     <Send className="h-3.5 w-3.5 mr-2" /> Enviar (WhatsApp / E-mail)
                   </Button>
                   <Button size="sm" className="w-full justify-start" onClick={approve} disabled={order.status === "aprovado"}>
@@ -400,6 +406,10 @@ export function OrderHubDialog({
                   </Button>
                 </div>
               </div>
+
+              <Separator />
+
+              <OrderAttachments orderId={currentId} />
 
               <Separator />
 
@@ -437,6 +447,16 @@ export function OrderHubDialog({
           </div>
         </div>
       </DialogContent>
+      {currentId && (
+        <SendOrderDialog
+          open={sendOpen}
+          onOpenChange={setSendOpen}
+          orderId={currentId}
+          orderNumber={order.number}
+          total={total}
+          client={selectedClient ?? null}
+        />
+      )}
     </Dialog>
   );
 }

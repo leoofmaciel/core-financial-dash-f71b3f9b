@@ -324,6 +324,114 @@ export type Database = {
         }
         Relationships: []
       }
+      message_templates: {
+        Row: {
+          body: string
+          channel: string
+          created_at: string
+          id: string
+          kind: string
+          subject: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          body: string
+          channel: string
+          created_at?: string
+          id?: string
+          kind: string
+          subject?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          body?: string
+          channel?: string
+          created_at?: string
+          id?: string
+          kind?: string
+          subject?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      order_attachments: {
+        Row: {
+          created_at: string
+          file_path: string
+          file_url: string | null
+          id: string
+          mime: string | null
+          name: string
+          order_id: string
+          size: number | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          file_path: string
+          file_url?: string | null
+          id?: string
+          mime?: string | null
+          name: string
+          order_id: string
+          size?: number | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          file_path?: string
+          file_url?: string | null
+          id?: string
+          mime?: string | null
+          name?: string
+          order_id?: string
+          size?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      order_communications: {
+        Row: {
+          body: string | null
+          channel: string
+          id: string
+          order_id: string
+          pdf_url: string | null
+          recipient: string | null
+          sent_at: string
+          status: string
+          subject: string | null
+          user_id: string
+        }
+        Insert: {
+          body?: string | null
+          channel: string
+          id?: string
+          order_id: string
+          pdf_url?: string | null
+          recipient?: string | null
+          sent_at?: string
+          status?: string
+          subject?: string | null
+          user_id: string
+        }
+        Update: {
+          body?: string | null
+          channel?: string
+          id?: string
+          order_id?: string
+          pdf_url?: string | null
+          recipient?: string | null
+          sent_at?: string
+          status?: string
+          subject?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       order_items: {
         Row: {
           description: string
@@ -721,7 +829,14 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "user"
-      order_status: "rascunho" | "orcamento" | "aprovado" | "cancelado"
+      order_status:
+        | "rascunho"
+        | "orcamento"
+        | "aprovado"
+        | "cancelado"
+        | "orcamento_enviado"
+        | "visualizado"
+        | "aguardando_retorno"
       tx_status: "pago" | "pendente" | "atrasado"
       tx_type: "entrada" | "saida"
     }
@@ -852,7 +967,15 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "user"],
-      order_status: ["rascunho", "orcamento", "aprovado", "cancelado"],
+      order_status: [
+        "rascunho",
+        "orcamento",
+        "aprovado",
+        "cancelado",
+        "orcamento_enviado",
+        "visualizado",
+        "aguardando_retorno",
+      ],
       tx_status: ["pago", "pendente", "atrasado"],
       tx_type: ["entrada", "saida"],
     },
