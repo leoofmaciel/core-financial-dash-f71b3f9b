@@ -53,14 +53,33 @@ export async function generateBudgetPDF(budget: BudgetData, company: CompanyData
   let logoOffset = 0;
   if (company.logo_url) {
     try {
-      // Add cache-busting to avoid stale CDN-cached images
-      const logoUrlWithBust = `${company.logo_url}?t=${Date.now()}`;
-      const img = await fetch(logoUrlWithBust, { cache: "no-store" }).then((r) => r.blob()).then(blobToDataURL);
-      const ext = (company.logo_url.split(".").pop() || "png").toLowerCase();
-      const fmt = ext === "jpg" || ext === "jpeg" ? "JPEG" : "PNG";
-      doc.addImage(img, fmt, margin, 8, 24, 24);
+      const url = new URL(company.logo_url);
+      url.searchParams.set("t", Date.now().toString());
+      
+      const imgData = await new Promise<string>((resolve, reject) => {
+        const img = new Image();
+        img.crossOrigin = "anonymous";
+        img.onload = () => {
+          const canvas = document.createElement("canvas");
+          canvas.width = img.width;
+          canvas.height = img.height;
+          const ctx = canvas.getContext("2d");
+          if (ctx) {
+            ctx.drawImage(img, 0, 0);
+            resolve(canvas.toDataURL("image/png"));
+          } else {
+            reject("No canvas context");
+          }
+        };
+        img.onerror = reject;
+        img.src = url.toString();
+      });
+
+      doc.addImage(imgData, "PNG", margin, 8, 24, 24);
       logoOffset = 28;
-    } catch { /* skip */ }
+    } catch (err) {
+      console.error("Failed to add logo to PDF:", err);
+    }
   }
 
   doc.setTextColor(255);
@@ -247,11 +266,4 @@ export async function generateBudgetPDF(budget: BudgetData, company: CompanyData
   doc.save(`Orcamento-${String(budget.number).padStart(5, "0")}.pdf`);
 }
 
-function blobToDataURL(blob: Blob): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const r = new FileReader();
-    r.onloadend = () => resolve(r.result as string);
-    r.onerror = reject;
-    r.readAsDataURL(blob);
-  });
-}
+
