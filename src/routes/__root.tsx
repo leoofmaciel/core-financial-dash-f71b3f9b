@@ -57,8 +57,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "twitter:title", content: "RM Financeiro — Gestão Financeira Empresarial" },
       { property: "og:description", content: "Sistema completo de gestão financeira empresarial: controle de movimentações, categorias, orçamentos em PDF e relatórios." },
       { name: "twitter:description", content: "Sistema completo de gestão financeira empresarial: controle de movimentações, categorias, orçamentos em PDF e relatórios." },
-      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/6a8ae748-5190-4e07-a185-1a95ddba1c63/id-preview-2c0e4912--8dad6a77-60bd-4a17-8ef2-f4e3e97a000c.lovable.app-1779664233147.png" },
-      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/6a8ae748-5190-4e07-a185-1a95ddba1c63/id-preview-2c0e4912--8dad6a77-60bd-4a17-8ef2-f4e3e97a000c.lovable.app-1779664233147.png" },
+      { property: "og:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/7f0e3642-1b29-491d-98c0-d0d0c98c83ee" },
+      { name: "twitter:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/7f0e3642-1b29-491d-98c0-d0d0c98c83ee" },
       { name: "twitter:card", content: "summary_large_image" },
       { property: "og:type", content: "website" },
     ],
@@ -81,7 +81,6 @@ function RootShell({ children }: { children: React.ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
-  
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
