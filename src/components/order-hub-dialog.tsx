@@ -52,6 +52,7 @@ export function OrderHubDialog({
   const [saving, setSaving] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [dirty, setDirty] = useState(false);
+  const [sendOpen, setSendOpen] = useState(false);
   const skipAutoSave = useRef(true);
 
   useEffect(() => {
