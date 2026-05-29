@@ -342,7 +342,7 @@ export function Copilot() {
       const { data } = await supabase.from("categories").select("*").eq("icon", currentType).order("name");
       setLoading(false);
       
-      const opts = (data || []).map((c: any) => ({ label: c.name, action: "SELECT_TX_CATEGORY", data: c.id }));
+      const opts: Option[] = (data || []).map((c: any) => ({ label: c.name, action: "SELECT_TX_CATEGORY", data: c.id }));
       opts.push({ label: "➕ Criar Nova", action: "CREATE_NEW_CATEGORY" });
       opts.push({ label: "Sem categoria", action: "SELECT_TX_CATEGORY" });
       addMsg("bot", `Qual é a categoria? (Selecione abaixo)`, opts);
