@@ -399,10 +399,10 @@ export function Copilot() {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) throw new Error("Sem usuário");
         const { error } = await supabase.from("transactions").insert({
-          user_id: user.id, name: draftTx.name!, type: draftTx.type || "saida",
+          user_id: user.id, name: draftTx.name!, type: (draftTx.type || "saida") as "entrada" | "saida",
           amount: draftTx.value!, category_id: draftTx.category_id || null,
-          status: draftTx.status || "pendente", 
-          transaction_date: draftTx.status === "pago" ? new Date().toISOString().split("T")[0] : null,
+          status: (draftTx.status || "pendente") as "pago" | "pendente" | "atrasado",
+          transaction_date: draftTx.status === "pago" ? new Date().toISOString().split("T")[0] : undefined,
           due_date: dateIso
         });
         if (error) throw error;
