@@ -166,7 +166,7 @@ export function Copilot() {
         setBotState("CONFIRM_NEW_CLIENT");
       } else {
         setDraftClientName(text);
-        const opts = data.map((c) => ({ label: c.name, action: "SELECT_CLIENT", data: c }));
+        const opts: Option[] = data.map((c) => ({ label: c.name, action: "SELECT_CLIENT", data: c }));
         opts.push({ label: "Nenhum desses (Criar novo)", action: "CREATE_CLIENT_YES" });
         addMsg("bot", `Encontrei estes clientes. Qual deles é? (Selecione abaixo)`, opts);
         setBotState("SELECTING_CLIENT");
