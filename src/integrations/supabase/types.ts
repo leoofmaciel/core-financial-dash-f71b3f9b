@@ -252,6 +252,66 @@ export type Database = {
         }
         Relationships: []
       }
+      fiscal_documents: {
+        Row: {
+          access_key: string | null
+          client_id: string | null
+          created_at: string
+          id: string
+          notaas_id: string | null
+          number: string | null
+          order_id: string | null
+          payload: Json | null
+          pdf_url: string | null
+          return_message: string | null
+          series: string | null
+          status: string
+          total_amount: number
+          type: string
+          updated_at: string
+          user_id: string
+          xml_url: string | null
+        }
+        Insert: {
+          access_key?: string | null
+          client_id?: string | null
+          created_at?: string
+          id?: string
+          notaas_id?: string | null
+          number?: string | null
+          order_id?: string | null
+          payload?: Json | null
+          pdf_url?: string | null
+          return_message?: string | null
+          series?: string | null
+          status?: string
+          total_amount?: number
+          type: string
+          updated_at?: string
+          user_id: string
+          xml_url?: string | null
+        }
+        Update: {
+          access_key?: string | null
+          client_id?: string | null
+          created_at?: string
+          id?: string
+          notaas_id?: string | null
+          number?: string | null
+          order_id?: string | null
+          payload?: Json | null
+          pdf_url?: string | null
+          return_message?: string | null
+          series?: string | null
+          status?: string
+          total_amount?: number
+          type?: string
+          updated_at?: string
+          user_id?: string
+          xml_url?: string | null
+        }
+        Relationships: []
+      }
       investment_payments: {
         Row: {
           amount: number
@@ -837,6 +897,8 @@ export type Database = {
         | "orcamento_enviado"
         | "visualizado"
         | "aguardando_retorno"
+        | "enviado"
+        | "faturado"
       tx_status: "pago" | "pendente" | "atrasado"
       tx_type: "entrada" | "saida"
     }
@@ -975,6 +1037,8 @@ export const Constants = {
         "orcamento_enviado",
         "visualizado",
         "aguardando_retorno",
+        "enviado",
+        "faturado",
       ],
       tx_status: ["pago", "pendente", "atrasado"],
       tx_type: ["entrada", "saida"],

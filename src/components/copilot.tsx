@@ -166,7 +166,7 @@ export function Copilot() {
         setBotState("CONFIRM_NEW_CLIENT");
       } else {
         setDraftClientName(text);
-        const opts = data.map((c) => ({ label: c.name, action: "SELECT_CLIENT", data: c }));
+        const opts: Option[] = data.map((c) => ({ label: c.name, action: "SELECT_CLIENT", data: c }));
         opts.push({ label: "Nenhum desses (Criar novo)", action: "CREATE_CLIENT_YES" });
         addMsg("bot", `Encontrei estes clientes. Qual deles é? (Selecione abaixo)`, opts);
         setBotState("SELECTING_CLIENT");
@@ -206,10 +206,6 @@ export function Copilot() {
       return;
     }
 
-    if (botState === "SELECTING_TX_CATEGORY") {
-      addMsg("bot", "Por favor, clique em uma das opções acima ou digite 'cancelar'.");
-      return;
-    }
 
     if (botState === "WAITING_REC_NAME") {
       const capText = text.trim().charAt(0).toUpperCase() + text.trim().slice(1);
@@ -232,7 +228,7 @@ export function Copilot() {
       const { data } = await supabase.from("categories").select("*").eq("icon", currentType).order("name");
       setLoading(false);
       
-      const opts = (data || []).map((c: any) => ({ label: c.name, action: "SELECT_REC_CATEGORY", data: c.id }));
+      const opts: Option[] = (data || []).map((c: any) => ({ label: c.name, action: "SELECT_REC_CATEGORY", data: c.id }));
       opts.push({ label: "➕ Criar Nova", action: "CREATE_NEW_REC_CATEGORY" });
       
       addMsg("bot", `Valor anotado: ${formatBRL(val)}. Agora, selecione a categoria dessa recorrência:`, opts);
@@ -346,7 +342,7 @@ export function Copilot() {
       const { data } = await supabase.from("categories").select("*").eq("icon", currentType).order("name");
       setLoading(false);
       
-      const opts = (data || []).map((c: any) => ({ label: c.name, action: "SELECT_TX_CATEGORY", data: c.id }));
+      const opts: Option[] = (data || []).map((c: any) => ({ label: c.name, action: "SELECT_TX_CATEGORY", data: c.id }));
       opts.push({ label: "➕ Criar Nova", action: "CREATE_NEW_CATEGORY" });
       opts.push({ label: "Sem categoria", action: "SELECT_TX_CATEGORY" });
       addMsg("bot", `Qual é a categoria? (Selecione abaixo)`, opts);
@@ -403,10 +399,10 @@ export function Copilot() {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) throw new Error("Sem usuário");
         const { error } = await supabase.from("transactions").insert({
-          user_id: user.id, name: draftTx.name!, type: draftTx.type || "saida",
+          user_id: user.id, name: draftTx.name!, type: (draftTx.type || "saida") as "entrada" | "saida",
           amount: draftTx.value!, category_id: draftTx.category_id || null,
-          status: draftTx.status || "pendente", 
-          transaction_date: draftTx.status === "pago" ? new Date().toISOString().split("T")[0] : null,
+          status: (draftTx.status || "pendente") as "pago" | "pendente" | "atrasado",
+          transaction_date: draftTx.status === "pago" ? new Date().toISOString().split("T")[0] : undefined,
           due_date: dateIso
         });
         if (error) throw error;
@@ -830,7 +826,8 @@ export function Copilot() {
             </div>
           </SheetHeader>
 
-          <ScrollArea className="flex-1 p-4" viewportRef={scrollRef}>
+          <div ref={scrollRef} className="flex-1 overflow-y-auto p-4">
+            {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
             <div className="flex flex-col gap-4 pb-4">
               {messages.map((msg) => (
                 <div key={msg.id} className={cn("flex w-full", msg.sender === "user" ? "justify-end" : "justify-start")}>
@@ -896,7 +893,7 @@ export function Copilot() {
                 </div>
               )}
             </div>
-          </ScrollArea>
+          </div>
 
           {/* Input Area */}
           <div className="p-3 bg-card border-t shrink-0">

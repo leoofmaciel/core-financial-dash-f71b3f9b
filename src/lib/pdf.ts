@@ -33,7 +33,9 @@ const GRAY_BORDER: [number, number, number] = [229, 231, 235]; // #e5e7eb
 const TEXT: [number, number, number] = [31, 41, 55];     // #1f2937
 const MUTED: [number, number, number] = [107, 114, 128]; // #6b7280
 
-export async function generateBudgetPDF(budget: BudgetData, company: CompanyData, returnDoc?: boolean) {
+export async function generateBudgetPDF(budget: BudgetData, company: CompanyData, returnDoc: true): Promise<jsPDF>;
+export async function generateBudgetPDF(budget: BudgetData, company: CompanyData, returnDoc?: false): Promise<void>;
+export async function generateBudgetPDF(budget: BudgetData, company: CompanyData, returnDoc?: boolean): Promise<jsPDF | void> {
   const doc = new jsPDF();
   const pageW = doc.internal.pageSize.getWidth();
   const pageH = doc.internal.pageSize.getHeight();
