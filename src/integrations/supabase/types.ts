@@ -897,6 +897,8 @@ export type Database = {
         | "orcamento_enviado"
         | "visualizado"
         | "aguardando_retorno"
+        | "enviado"
+        | "faturado"
       tx_status: "pago" | "pendente" | "atrasado"
       tx_type: "entrada" | "saida"
     }
@@ -1035,6 +1037,8 @@ export const Constants = {
         "orcamento_enviado",
         "visualizado",
         "aguardando_retorno",
+        "enviado",
+        "faturado",
       ],
       tx_status: ["pago", "pendente", "atrasado"],
       tx_type: ["entrada", "saida"],
