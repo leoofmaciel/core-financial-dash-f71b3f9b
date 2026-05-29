@@ -893,7 +893,7 @@ export function Copilot() {
                 </div>
               )}
             </div>
-          </ScrollArea>
+          </div>
 
           {/* Input Area */}
           <div className="p-3 bg-card border-t shrink-0">
