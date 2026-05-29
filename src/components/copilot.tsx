@@ -206,10 +206,6 @@ export function Copilot() {
       return;
     }
 
-    if (botState === "SELECTING_TX_CATEGORY") {
-      addMsg("bot", "Por favor, clique em uma das opções acima ou digite 'cancelar'.");
-      return;
-    }
 
     if (botState === "WAITING_REC_NAME") {
       const capText = text.trim().charAt(0).toUpperCase() + text.trim().slice(1);
