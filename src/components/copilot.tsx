@@ -826,7 +826,8 @@ export function Copilot() {
             </div>
           </SheetHeader>
 
-          <ScrollArea className="flex-1 p-4" viewportRef={scrollRef}>
+          <div ref={scrollRef} className="flex-1 overflow-y-auto p-4">
+            {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
             <div className="flex flex-col gap-4 pb-4">
               {messages.map((msg) => (
                 <div key={msg.id} className={cn("flex w-full", msg.sender === "user" ? "justify-end" : "justify-start")}>
