@@ -312,6 +312,63 @@ export type Database = {
         }
         Relationships: []
       }
+      fiscal_settings: {
+        Row: {
+          aliquota_iss: number | null
+          cfop_padrao: string | null
+          cnpj_emissor: string | null
+          codigo_municipio: string | null
+          codigo_tributacao_municipio: string | null
+          created_at: string
+          id: string
+          inscricao_municipal: string | null
+          iss_retido: boolean | null
+          natureza_operacao: string | null
+          ncm_padrao: string | null
+          razao_social: string | null
+          uf: string | null
+          updated_at: string
+          user_id: string
+          webhook_secret: string | null
+        }
+        Insert: {
+          aliquota_iss?: number | null
+          cfop_padrao?: string | null
+          cnpj_emissor?: string | null
+          codigo_municipio?: string | null
+          codigo_tributacao_municipio?: string | null
+          created_at?: string
+          id?: string
+          inscricao_municipal?: string | null
+          iss_retido?: boolean | null
+          natureza_operacao?: string | null
+          ncm_padrao?: string | null
+          razao_social?: string | null
+          uf?: string | null
+          updated_at?: string
+          user_id: string
+          webhook_secret?: string | null
+        }
+        Update: {
+          aliquota_iss?: number | null
+          cfop_padrao?: string | null
+          cnpj_emissor?: string | null
+          codigo_municipio?: string | null
+          codigo_tributacao_municipio?: string | null
+          created_at?: string
+          id?: string
+          inscricao_municipal?: string | null
+          iss_retido?: boolean | null
+          natureza_operacao?: string | null
+          ncm_padrao?: string | null
+          razao_social?: string | null
+          uf?: string | null
+          updated_at?: string
+          user_id?: string
+          webhook_secret?: string | null
+        }
+        Relationships: []
+      }
       investment_payments: {
         Row: {
           amount: number
