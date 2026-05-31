@@ -51,6 +51,9 @@ function FiscalDashboard() {
           <p className="text-sm text-muted-foreground">Emissão e gestão de NFe e NFS-e integrado com Notaas.</p>
         </div>
         <div className="flex gap-2">
+          <Link to="/fiscal/configuracoes">
+            <Button variant="outline">Configurações</Button>
+          </Link>
           <Link to="/fiscal/nova">
             <Button><Plus className="h-4 w-4 mr-1" /> Emitir Nova Nota</Button>
           </Link>
