@@ -30,6 +30,7 @@ import { Route as AuthenticatedReportsIndexRouteImport } from './routes/_authent
 import { Route as AuthenticatedOrdersIndexRouteImport } from './routes/_authenticated/orders/index'
 import { Route as AuthenticatedFiscalIndexRouteImport } from './routes/_authenticated/fiscal/index'
 import { Route as AuthenticatedBudgetsIndexRouteImport } from './routes/_authenticated/budgets/index'
+import { Route as ApiPublicNotaasWebhookRouteImport } from './routes/api/public/notaas-webhook'
 import { Route as AuthenticatedReportsInadimplenciaRouteImport } from './routes/_authenticated/reports/inadimplencia'
 import { Route as AuthenticatedReportsFluxoRouteImport } from './routes/_authenticated/reports/fluxo'
 import { Route as AuthenticatedReportsFixosRouteImport } from './routes/_authenticated/reports/fixos'
@@ -38,6 +39,7 @@ import { Route as AuthenticatedReportsConversaoRouteImport } from './routes/_aut
 import { Route as AuthenticatedReportsClientesRouteImport } from './routes/_authenticated/reports/clientes'
 import { Route as AuthenticatedOrdersIdRouteImport } from './routes/_authenticated/orders/$id'
 import { Route as AuthenticatedFiscalNovaRouteImport } from './routes/_authenticated/fiscal/nova'
+import { Route as AuthenticatedFiscalConfiguracoesRouteImport } from './routes/_authenticated/fiscal/configuracoes'
 import { Route as AuthenticatedBudgetsIdRouteImport } from './routes/_authenticated/budgets/$id'
 
 const SignupRoute = SignupRouteImport.update({
@@ -151,6 +153,11 @@ const AuthenticatedBudgetsIndexRoute =
     path: '/budgets/',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const ApiPublicNotaasWebhookRoute = ApiPublicNotaasWebhookRouteImport.update({
+  id: '/api/public/notaas-webhook',
+  path: '/api/public/notaas-webhook',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedReportsInadimplenciaRoute =
   AuthenticatedReportsInadimplenciaRouteImport.update({
     id: '/reports/inadimplencia',
@@ -197,6 +204,12 @@ const AuthenticatedFiscalNovaRoute = AuthenticatedFiscalNovaRouteImport.update({
   path: '/fiscal/nova',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedFiscalConfiguracoesRoute =
+  AuthenticatedFiscalConfiguracoesRouteImport.update({
+    id: '/fiscal/configuracoes',
+    path: '/fiscal/configuracoes',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedBudgetsIdRoute = AuthenticatedBudgetsIdRouteImport.update({
   id: '/budgets/$id',
   path: '/budgets/$id',
@@ -221,6 +234,7 @@ export interface FileRoutesByFullPath {
   '/transactions': typeof AuthenticatedTransactionsRoute
   '/users': typeof AuthenticatedUsersRoute
   '/budgets/$id': typeof AuthenticatedBudgetsIdRoute
+  '/fiscal/configuracoes': typeof AuthenticatedFiscalConfiguracoesRoute
   '/fiscal/nova': typeof AuthenticatedFiscalNovaRoute
   '/orders/$id': typeof AuthenticatedOrdersIdRoute
   '/reports/clientes': typeof AuthenticatedReportsClientesRoute
@@ -229,6 +243,7 @@ export interface FileRoutesByFullPath {
   '/reports/fixos': typeof AuthenticatedReportsFixosRoute
   '/reports/fluxo': typeof AuthenticatedReportsFluxoRoute
   '/reports/inadimplencia': typeof AuthenticatedReportsInadimplenciaRoute
+  '/api/public/notaas-webhook': typeof ApiPublicNotaasWebhookRoute
   '/budgets/': typeof AuthenticatedBudgetsIndexRoute
   '/fiscal/': typeof AuthenticatedFiscalIndexRoute
   '/orders/': typeof AuthenticatedOrdersIndexRoute
@@ -252,6 +267,7 @@ export interface FileRoutesByTo {
   '/transactions': typeof AuthenticatedTransactionsRoute
   '/users': typeof AuthenticatedUsersRoute
   '/budgets/$id': typeof AuthenticatedBudgetsIdRoute
+  '/fiscal/configuracoes': typeof AuthenticatedFiscalConfiguracoesRoute
   '/fiscal/nova': typeof AuthenticatedFiscalNovaRoute
   '/orders/$id': typeof AuthenticatedOrdersIdRoute
   '/reports/clientes': typeof AuthenticatedReportsClientesRoute
@@ -260,6 +276,7 @@ export interface FileRoutesByTo {
   '/reports/fixos': typeof AuthenticatedReportsFixosRoute
   '/reports/fluxo': typeof AuthenticatedReportsFluxoRoute
   '/reports/inadimplencia': typeof AuthenticatedReportsInadimplenciaRoute
+  '/api/public/notaas-webhook': typeof ApiPublicNotaasWebhookRoute
   '/budgets': typeof AuthenticatedBudgetsIndexRoute
   '/fiscal': typeof AuthenticatedFiscalIndexRoute
   '/orders': typeof AuthenticatedOrdersIndexRoute
@@ -285,6 +302,7 @@ export interface FileRoutesById {
   '/_authenticated/transactions': typeof AuthenticatedTransactionsRoute
   '/_authenticated/users': typeof AuthenticatedUsersRoute
   '/_authenticated/budgets/$id': typeof AuthenticatedBudgetsIdRoute
+  '/_authenticated/fiscal/configuracoes': typeof AuthenticatedFiscalConfiguracoesRoute
   '/_authenticated/fiscal/nova': typeof AuthenticatedFiscalNovaRoute
   '/_authenticated/orders/$id': typeof AuthenticatedOrdersIdRoute
   '/_authenticated/reports/clientes': typeof AuthenticatedReportsClientesRoute
@@ -293,6 +311,7 @@ export interface FileRoutesById {
   '/_authenticated/reports/fixos': typeof AuthenticatedReportsFixosRoute
   '/_authenticated/reports/fluxo': typeof AuthenticatedReportsFluxoRoute
   '/_authenticated/reports/inadimplencia': typeof AuthenticatedReportsInadimplenciaRoute
+  '/api/public/notaas-webhook': typeof ApiPublicNotaasWebhookRoute
   '/_authenticated/budgets/': typeof AuthenticatedBudgetsIndexRoute
   '/_authenticated/fiscal/': typeof AuthenticatedFiscalIndexRoute
   '/_authenticated/orders/': typeof AuthenticatedOrdersIndexRoute
@@ -318,6 +337,7 @@ export interface FileRouteTypes {
     | '/transactions'
     | '/users'
     | '/budgets/$id'
+    | '/fiscal/configuracoes'
     | '/fiscal/nova'
     | '/orders/$id'
     | '/reports/clientes'
@@ -326,6 +346,7 @@ export interface FileRouteTypes {
     | '/reports/fixos'
     | '/reports/fluxo'
     | '/reports/inadimplencia'
+    | '/api/public/notaas-webhook'
     | '/budgets/'
     | '/fiscal/'
     | '/orders/'
@@ -349,6 +370,7 @@ export interface FileRouteTypes {
     | '/transactions'
     | '/users'
     | '/budgets/$id'
+    | '/fiscal/configuracoes'
     | '/fiscal/nova'
     | '/orders/$id'
     | '/reports/clientes'
@@ -357,6 +379,7 @@ export interface FileRouteTypes {
     | '/reports/fixos'
     | '/reports/fluxo'
     | '/reports/inadimplencia'
+    | '/api/public/notaas-webhook'
     | '/budgets'
     | '/fiscal'
     | '/orders'
@@ -381,6 +404,7 @@ export interface FileRouteTypes {
     | '/_authenticated/transactions'
     | '/_authenticated/users'
     | '/_authenticated/budgets/$id'
+    | '/_authenticated/fiscal/configuracoes'
     | '/_authenticated/fiscal/nova'
     | '/_authenticated/orders/$id'
     | '/_authenticated/reports/clientes'
@@ -389,6 +413,7 @@ export interface FileRouteTypes {
     | '/_authenticated/reports/fixos'
     | '/_authenticated/reports/fluxo'
     | '/_authenticated/reports/inadimplencia'
+    | '/api/public/notaas-webhook'
     | '/_authenticated/budgets/'
     | '/_authenticated/fiscal/'
     | '/_authenticated/orders/'
@@ -402,6 +427,7 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   SignupRoute: typeof SignupRoute
+  ApiPublicNotaasWebhookRoute: typeof ApiPublicNotaasWebhookRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -553,6 +579,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedBudgetsIndexRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/api/public/notaas-webhook': {
+      id: '/api/public/notaas-webhook'
+      path: '/api/public/notaas-webhook'
+      fullPath: '/api/public/notaas-webhook'
+      preLoaderRoute: typeof ApiPublicNotaasWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/reports/inadimplencia': {
       id: '/_authenticated/reports/inadimplencia'
       path: '/reports/inadimplencia'
@@ -609,6 +642,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedFiscalNovaRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/fiscal/configuracoes': {
+      id: '/_authenticated/fiscal/configuracoes'
+      path: '/fiscal/configuracoes'
+      fullPath: '/fiscal/configuracoes'
+      preLoaderRoute: typeof AuthenticatedFiscalConfiguracoesRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/budgets/$id': {
       id: '/_authenticated/budgets/$id'
       path: '/budgets/$id'
@@ -632,6 +672,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedTransactionsRoute: typeof AuthenticatedTransactionsRoute
   AuthenticatedUsersRoute: typeof AuthenticatedUsersRoute
   AuthenticatedBudgetsIdRoute: typeof AuthenticatedBudgetsIdRoute
+  AuthenticatedFiscalConfiguracoesRoute: typeof AuthenticatedFiscalConfiguracoesRoute
   AuthenticatedFiscalNovaRoute: typeof AuthenticatedFiscalNovaRoute
   AuthenticatedOrdersIdRoute: typeof AuthenticatedOrdersIdRoute
   AuthenticatedReportsClientesRoute: typeof AuthenticatedReportsClientesRoute
@@ -659,6 +700,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedTransactionsRoute: AuthenticatedTransactionsRoute,
   AuthenticatedUsersRoute: AuthenticatedUsersRoute,
   AuthenticatedBudgetsIdRoute: AuthenticatedBudgetsIdRoute,
+  AuthenticatedFiscalConfiguracoesRoute: AuthenticatedFiscalConfiguracoesRoute,
   AuthenticatedFiscalNovaRoute: AuthenticatedFiscalNovaRoute,
   AuthenticatedOrdersIdRoute: AuthenticatedOrdersIdRoute,
   AuthenticatedReportsClientesRoute: AuthenticatedReportsClientesRoute,
@@ -685,6 +727,7 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   SignupRoute: SignupRoute,
+  ApiPublicNotaasWebhookRoute: ApiPublicNotaasWebhookRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
