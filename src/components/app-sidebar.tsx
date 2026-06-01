@@ -72,7 +72,7 @@ export function AppSidebar({ isAdmin }: { isAdmin: boolean }) {
           <SidebarGroupLabel>Principal</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {mainItems.map((item) => (
+              {mainItems.filter((i) => perms.loading || perms.canView(i.module)).map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild tooltip={item.title}>
                     <Link to={item.url} onClick={closeOnMobile} className="flex items-center gap-2">
@@ -83,6 +83,7 @@ export function AppSidebar({ isAdmin }: { isAdmin: boolean }) {
                 </SidebarMenuItem>
               ))}
             </SidebarMenu>
+
           </SidebarGroupContent>
         </SidebarGroup>
 
