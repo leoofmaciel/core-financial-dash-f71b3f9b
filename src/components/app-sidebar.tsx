@@ -91,7 +91,7 @@ export function AppSidebar({ isAdmin }: { isAdmin: boolean }) {
           <SidebarGroupLabel>Sistema</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {settingsItems.filter((i) => !i.adminOnly || isAdmin).map((item) => (
+              {settingsItems.filter((i) => (!i.adminOnly || perms.isAdmin || isAdmin) && (perms.loading || perms.canView(i.module))).map((item) => (
                 <SidebarMenuItem key={item.url}>
                   <SidebarMenuButton asChild isActive={path.startsWith(item.url)}>
                     <Link to={item.url} onClick={closeOnMobile}>
