@@ -33,7 +33,7 @@ export type Database = {
           entity_id?: string | null
           id?: string
           user_id?: string | null
-          workspace_id: string
+          workspace_id?: string
         }
         Update: {
           action?: string
@@ -74,7 +74,7 @@ export type Database = {
           quantity?: number
           total?: number
           unit_price?: number
-          workspace_id: string
+          workspace_id?: string
         }
         Update: {
           budget_id?: string
@@ -136,7 +136,7 @@ export type Database = {
           total?: number
           updated_at?: string
           user_id: string
-          workspace_id: string
+          workspace_id?: string
         }
         Update: {
           client_company?: string | null
@@ -189,7 +189,7 @@ export type Database = {
           id?: string
           name: string
           user_id: string
-          workspace_id: string
+          workspace_id?: string
         }
         Update: {
           color?: string | null
@@ -239,7 +239,7 @@ export type Database = {
           phone?: string | null
           updated_at?: string
           user_id: string
-          workspace_id: string
+          workspace_id?: string
         }
         Update: {
           address?: string | null
@@ -291,7 +291,7 @@ export type Database = {
           phone?: string | null
           updated_at?: string
           user_id: string
-          workspace_id: string
+          workspace_id?: string
         }
         Update: {
           address?: string | null
@@ -354,7 +354,7 @@ export type Database = {
           type: string
           updated_at?: string
           user_id: string
-          workspace_id: string
+          workspace_id?: string
           xml_url?: string | null
         }
         Update: {
@@ -424,7 +424,7 @@ export type Database = {
           updated_at?: string
           user_id: string
           webhook_secret?: string | null
-          workspace_id: string
+          workspace_id?: string
         }
         Update: {
           aliquota_iss?: number | null
@@ -468,7 +468,7 @@ export type Database = {
           id?: string
           investment_id: string
           partner_id: string
-          workspace_id: string
+          workspace_id?: string
         }
         Update: {
           amount?: number
@@ -524,7 +524,7 @@ export type Database = {
           status?: string
           updated_at?: string
           user_id: string
-          workspace_id: string
+          workspace_id?: string
         }
         Update: {
           amount?: number
@@ -569,7 +569,7 @@ export type Database = {
           subject?: string | null
           updated_at?: string
           user_id: string
-          workspace_id: string
+          workspace_id?: string
         }
         Update: {
           body?: string
@@ -647,7 +647,7 @@ export type Database = {
           order_id: string
           size?: number | null
           user_id: string
-          workspace_id: string
+          workspace_id?: string
         }
         Update: {
           created_at?: string
@@ -696,7 +696,7 @@ export type Database = {
           status?: string
           subject?: string | null
           user_id: string
-          workspace_id: string
+          workspace_id?: string
         }
         Update: {
           body?: string | null
@@ -740,7 +740,7 @@ export type Database = {
           quantity?: number
           total?: number
           unit_price?: number
-          workspace_id: string
+          workspace_id?: string
         }
         Update: {
           description?: string
@@ -794,7 +794,7 @@ export type Database = {
           total?: number
           transaction_id?: string | null
           unit_price?: number
-          workspace_id: string
+          workspace_id?: string
         }
         Update: {
           created_at?: string
@@ -855,7 +855,7 @@ export type Database = {
           total?: number
           updated_at?: string
           user_id: string
-          workspace_id: string
+          workspace_id?: string
         }
         Update: {
           approved_at?: string | null
@@ -908,7 +908,7 @@ export type Database = {
           share_percent?: number
           updated_at?: string
           user_id: string
-          workspace_id: string
+          workspace_id?: string
         }
         Update: {
           created_at?: string
@@ -994,7 +994,7 @@ export type Database = {
           type: Database["public"]["Enums"]["tx_type"]
           updated_at?: string
           user_id: string
-          workspace_id: string
+          workspace_id?: string
         }
         Update: {
           active?: boolean
@@ -1046,7 +1046,7 @@ export type Database = {
           title: string
           updated_at?: string
           user_id: string
-          workspace_id: string
+          workspace_id?: string
         }
         Update: {
           created_at?: string
@@ -1108,7 +1108,7 @@ export type Database = {
           type: Database["public"]["Enums"]["tx_type"]
           updated_at?: string
           user_id: string
-          workspace_id: string
+          workspace_id?: string
         }
         Update: {
           amount?: number
