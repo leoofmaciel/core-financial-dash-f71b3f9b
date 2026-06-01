@@ -1,72 +1,115 @@
-# Plano: Plataforma Operacional Moderna
+# Sistema multiusuário com workspace compartilhado
 
-O pedido é grande. Vou propor um plano em **fases entregáveis**, cada uma utilizável de imediato, para evitar um único PR gigante e instável.
+## Visão geral
 
----
+Hoje cada tabela do sistema filtra dados por `user_id = auth.uid()` — cada usuário enxerga só os seus. Vamos transformar isso num modelo onde **todos os usuários do workspace do `lmaciel66@gmail.com` operam na mesma base de dados**, e o admin controla, por usuário e por módulo, quem pode ver e quem pode editar.
 
-## Fase 1 — Hub Operacional do Pedido (modal fullscreen)
+## O que será criado
 
-Tela única para operar todo o pedido sem reloads.
+### 1. Estrutura de workspace
 
-- Novo componente `OrderHubDialog` (modal fullscreen) acionado a partir de `orders/index.tsx` e do Copiloto.
-- **Header fixo**: nº pedido, status (badge clicável p/ trocar), cliente, botões rápidos (Salvar, PDF, Enviar).
-- **Coluna esquerda**: dados do cliente + botão "Novo cliente" inline (mini-form em popover).
-- **Centro**: itens (add/edit/remove), descontos, subtotal/total em tempo real.
-- **Coluna direita**: status financeiro (conta a receber vinculada), ações rápidas (aprovar/marcar pago), histórico (`activity_logs` filtrado por entity_id), observações.
-- **Footer fixo**: total, Salvar, Download PDF, Enviar orçamento.
-- Auto-save (debounce 1.5s) + toast discreto "salvo".
-- Mantém rota `/orders/$id` como fallback (deep-link).
+- **`workspaces`** — tabela com o "espaço" compartilhado (id, nome, owner_id). O `lmaciel66@gmail.com` vira owner do primeiro workspace.
+- **`workspace_members`** — vínculo usuário ↔ workspace, com papel: `owner`, `admin`, `member`. O owner sempre tem acesso total.
+- **`module_permissions`** — para cada membro, marca em quais módulos ele tem `view` e/ou `edit`. Módulos:
+  - `dashboard`, `clients`, `orders`, `budgets`, `transactions`, `categories`, `recurrences`, `investments`, `partners`, `tasks`, `fiscal`, `reports`, `settings`, `users`
 
-## Fase 2 — Anexos + Exclusão em cascata
+### 2. Migração das tabelas existentes
 
-- Migration: nova tabela `order_attachments` (order_id, file_url, name, size, mime, uploaded_by) + bucket `order-attachments` privado com RLS.
-- Upload drag-drop dentro do Hub.
-- Migration: `ON DELETE CASCADE` em `order_items`, `order_materials`, `budgets`, `budget_items`, `order_attachments`, e `transactions.order_id`.
-- Modal de confirmação elegante listando o que será removido (itens, orçamentos, contas, anexos).
+Todas as tabelas de dados ganham coluna `workspace_id` (nullable inicialmente). Backfill atribui o workspace do `lmaciel66@gmail.com` a todos os registros existentes. Depois a coluna vira `NOT NULL`.
 
-## Fase 3 — Envio por WhatsApp e E-mail
+Tabelas afetadas: `clients`, `orders`, `order_items`, `order_materials`, `order_attachments`, `order_communications`, `budgets`, `budget_items`, `transactions`, `categories`, `recurrences`, `investments`, `investment_payments`, `partners`, `tasks`, `message_templates`, `company_settings`, `fiscal_documents`, `fiscal_settings`, `activity_logs`.
 
-**WhatsApp** (MVP via wa.me):
-- Botão "Enviar por WhatsApp" gera PDF, salva no bucket, abre `https://wa.me/<phone>?text=<mensagem>` em nova aba com mensagem template editável antes.
-- Limitação: WhatsApp Web não aceita anexo automático via URL. Solução: link público do PDF (signed URL 7 dias) embutido na mensagem. Estrutura preparada para futura API oficial.
+### 3. Novas RLS policies
 
-**E-mail** (via Lovable Email — sem precisar conectar provedor externo):
-- Configurar domínio de envio (`email_domain` setup).
-- Server function `sendBudgetEmail` que renderiza template + anexa PDF + registra em nova tabela `order_communications`.
-- Modal de envio com assunto/mensagem editáveis e preview.
+Substituem o filtro `auth.uid() = user_id` por:
 
-**Tabela `order_communications`**: order_id, channel (whatsapp|email), status (sent|viewed|...), recipient, subject, body, pdf_url, sent_at, sent_by — alimenta histórico e habilita reenvio rápido + futuros follow-ups automáticos.
+```text
+SELECT: usuário é membro do workspace E tem permissão `view` no módulo
+INSERT/UPDATE/DELETE: usuário é membro do workspace E tem permissão `edit` no módulo
+```
 
-## Fase 4 — Status estendidos + templates
+Implementado via funções `SECURITY DEFINER`:
+- `is_workspace_member(workspace_id)` — checa vínculo
+- `can_view(workspace_id, module)` — owner/admin sempre `true`; membro respeita `module_permissions`
+- `can_edit(workspace_id, module)` — idem
 
-- Enum `order_status` ampliado: `orcamento_enviado`, `visualizado`, `aguardando_retorno`, `aprovado`, `cancelado` (mantém compatibilidade).
-- Tabela `message_templates` (tipo, assunto, corpo) editável em Configurações.
+O `user_id` original de cada registro fica preservado (vira "criado por") só pra auditoria, mas não é mais usado em RLS.
 
-## Fase 5 — Copiloto com etapas puláveis
+### 4. Telas
 
-- Cada etapa do `Copilot` ganha botão "Pular por enquanto".
-- Stepper mostra etapas puladas com ícone âmbar; permite voltar a qualquer momento.
-- Apenas campos realmente obrigatórios bloqueiam (cliente + ao menos 1 item para gerar orçamento).
+- **Usuários** (`/users`, só admin) — substitui a tela atual:
+  - Lista membros do workspace com papel e resumo das permissões
+  - Botão "Criar usuário" → modal com email + senha provisória + papel + checkboxes por módulo (view/edit)
+  - Editar membro (alterar papel e permissões)
+  - Remover membro (mantém o registro do auth, só desvincula)
+- **Cadastro público desabilitado** — `/signup` deixa de ser acessível; rota redireciona pra `/login` com aviso "Solicite uma conta ao administrador".
+- **Sidebar** — itens ficam ocultos quando o usuário não tem `view` no módulo.
 
-## Fase 6 — Polimentos UX
+### 5. Backend
 
-- Menu mobile: fechar `Sidebar` automaticamente ao navegar (usar `useSidebar().setOpenMobile(false)` no `AppSidebar` nav links).
-- Transições suaves, feedback de auto-save global, busca inteligente já existe (`GlobalSearch`) — apenas refinar.
-
----
+- Server function `createWorkspaceMember` (admin-only): cria usuário no auth via `supabaseAdmin.auth.admin.createUser({ email, password, email_confirm: true })`, insere em `workspace_members` e `module_permissions`.
+- Server function `updateMemberPermissions` (admin-only).
+- Server function `removeMember` (admin-only).
+- Hook `useMyPermissions()` carrega permissões do usuário logado uma vez e disponibiliza pra sidebar e telas.
 
 ## Detalhes técnicos
 
-- Stack mantido: TanStack Start + Supabase + shadcn/ui + TanStack Query.
-- Toda lógica server-sensitive em `createServerFn` ou direto via supabase client (RLS já cobre — projeto single-tenant).
-- `activity_logs` já existe e é usado em todas as ações para histórico por usuário.
-- PDF: reaproveita `generateBudgetPDF` em `src/lib/pdf.ts`.
-- Sem multi-tenant: nenhuma mudança de schema nesse sentido.
+### Funções SECURITY DEFINER (anti-recursão RLS)
 
----
+```sql
+CREATE FUNCTION current_workspace_id() RETURNS uuid
+  -- retorna o workspace_id do membro logado (assume 1 workspace por usuário nesta fase)
 
-## Como gostaria de prosseguir
+CREATE FUNCTION can_view(_module text) RETURNS boolean
+CREATE FUNCTION can_edit(_module text) RETURNS boolean
+CREATE FUNCTION is_workspace_admin() RETURNS boolean
+```
 
-O escopo é grande demais para um único turno sem virar uma bagunça. Sugiro **começar pela Fase 1 (Hub do Pedido)** agora — é a mudança de maior impacto visual/operacional e desbloqueia as demais.
+Owner do workspace é sempre admin implícito. Todas as policies passam por essas funções pra evitar recursão e simplificar SQL.
 
-Confirma que posso começar pela Fase 1, ou prefere reordenar (ex: WhatsApp/E-mail primeiro, ou cascade delete primeiro)?
+### Modelo de papéis vs permissões
+
+- **`owner`**: lmaciel66 — acesso total, não pode ser removido nem ter permissões reduzidas
+- **`admin`**: gerencia usuários e tem acesso total a módulos
+- **`member`**: só vê/edita módulos marcados em `module_permissions`
+
+### Cadastro público
+
+`supabase--configure_auth` com `disable_signup: true`. A criação de contas passa a ser exclusivamente pela tela de admin (via `supabaseAdmin.auth.admin.createUser`).
+
+### Migração de dados (uma vez)
+
+```sql
+INSERT INTO workspaces (id, name, owner_id)
+SELECT gen_random_uuid(), 'RM Financeiro', id FROM auth.users
+WHERE email = 'lmaciel66@gmail.com';
+
+INSERT INTO workspace_members (workspace_id, user_id, role)
+SELECT w.id, w.owner_id, 'owner' FROM workspaces w;
+
+UPDATE clients SET workspace_id = (SELECT id FROM workspaces LIMIT 1);
+-- repete para cada tabela
+```
+
+## O que NÃO muda nesta fase
+
+- Mantemos `user_roles` (admin global) só pra compatibilidade do is_admin existente — o controle real passa a ser via `workspace_members.role`.
+- Continua 1 workspace só (do lmaciel66). A tabela permite múltiplos no futuro, mas a UI assume 1.
+- Logs de atividade continuam por `user_id` (quem fez), só ganham `workspace_id` pra filtro.
+
+## Ordem de execução
+
+1. **Migração SQL** (criação de tabelas, funções, backfill, novas RLS) — 1 migration grande, reversível em teoria
+2. **Server functions** de admin (criar/editar/remover membro)
+3. **Tela de Usuários** reformulada
+4. **Hook `useMyPermissions`** + ocultação de itens da sidebar + guards nas rotas
+5. **Desabilitar signup público**
+6. **Testes manuais**: criar um usuário só com `view` em "Clientes", confirmar que ele só vê clientes e nada mais
+
+## Riscos
+
+- **Migração de dados existentes**: se o email `lmaciel66@gmail.com` não existir no auth, a migration falha. Vou validar isso antes.
+- **Quebra temporária**: durante a migration, qualquer usuário logado pode ver tela vazia até o backfill completar. Deve durar segundos.
+- **Permissão de módulo pra recursos aninhados** (ex: `order_items` herda permissão de `orders`): vou agrupar via RLS que consulta o pai.
+
+Confirma esse plano pra eu seguir com a implementação?
