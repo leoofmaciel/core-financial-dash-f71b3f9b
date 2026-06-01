@@ -9,27 +9,29 @@ import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { useCompanySettings } from "@/hooks/use-company-settings";
+import { useMyPermissions, type ModuleKey } from "@/hooks/use-my-permissions";
 
-const mainItems = [
-  { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
-  { title: "Fiscal", url: "/fiscal", icon: Receipt },
-  { title: "Clientes", url: "/clients", icon: UserCircle },
-  { title: "Pedidos", url: "/orders", icon: ClipboardList },
-  { title: "Orçamentos", url: "/budgets", icon: FileText },
-  { title: "Relatórios", url: "/reports", icon: BarChart2 },
-  { title: "Movimentações", url: "/transactions", icon: ArrowRightLeft },
-  { title: "Recorrências", url: "/recurrences", icon: Repeat },
-  { title: "Investimentos", url: "/investments", icon: Wallet },
-  { title: "Sócios", url: "/partners", icon: HandCoins },
-  { title: "Tarefas", url: "/tasks", icon: CheckSquare },
-  { title: "Categorias", url: "/categories", icon: Tags },
+const mainItems: { title: string; url: string; icon: any; module: ModuleKey }[] = [
+  { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard, module: "dashboard" },
+  { title: "Fiscal", url: "/fiscal", icon: Receipt, module: "fiscal" },
+  { title: "Clientes", url: "/clients", icon: UserCircle, module: "clients" },
+  { title: "Pedidos", url: "/orders", icon: ClipboardList, module: "orders" },
+  { title: "Orçamentos", url: "/budgets", icon: FileText, module: "budgets" },
+  { title: "Relatórios", url: "/reports", icon: BarChart2, module: "reports" },
+  { title: "Movimentações", url: "/transactions", icon: ArrowRightLeft, module: "transactions" },
+  { title: "Recorrências", url: "/recurrences", icon: Repeat, module: "recurrences" },
+  { title: "Investimentos", url: "/investments", icon: Wallet, module: "investments" },
+  { title: "Sócios", url: "/partners", icon: HandCoins, module: "partners" },
+  { title: "Tarefas", url: "/tasks", icon: CheckSquare, module: "tasks" },
+  { title: "Categorias", url: "/categories", icon: Tags, module: "categories" },
 ];
 
-const settingsItems = [
-  { title: "Histórico", url: "/logs", icon: History },
-  { title: "Configurações", url: "/settings", icon: Settings },
-  { title: "Usuários", url: "/users", icon: Users, adminOnly: true },
+const settingsItems: { title: string; url: string; icon: any; module: ModuleKey; adminOnly?: boolean }[] = [
+  { title: "Histórico", url: "/logs", icon: History, module: "settings" },
+  { title: "Configurações", url: "/settings", icon: Settings, module: "settings" },
+  { title: "Usuários", url: "/users", icon: Users, module: "users", adminOnly: true },
 ];
+
 
 export function AppSidebar({ isAdmin }: { isAdmin: boolean }) {
   const { state, isMobile, setOpenMobile } = useSidebar();
@@ -37,9 +39,11 @@ export function AppSidebar({ isAdmin }: { isAdmin: boolean }) {
   const path = useRouterState({ select: (r) => r.location.pathname });
   const navigate = useNavigate();
   const company = useCompanySettings();
+  const perms = useMyPermissions();
   const logoSrc = company?.logo_url || logo;
 
   const closeOnMobile = () => { if (isMobile) setOpenMobile(false); };
+
 
   const logout = async () => {
     await supabase.auth.signOut();
@@ -68,7 +72,7 @@ export function AppSidebar({ isAdmin }: { isAdmin: boolean }) {
           <SidebarGroupLabel>Principal</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {mainItems.map((item) => (
+              {mainItems.filter((i) => perms.loading || perms.canView(i.module)).map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild tooltip={item.title}>
                     <Link to={item.url} onClick={closeOnMobile} className="flex items-center gap-2">
@@ -79,6 +83,7 @@ export function AppSidebar({ isAdmin }: { isAdmin: boolean }) {
                 </SidebarMenuItem>
               ))}
             </SidebarMenu>
+
           </SidebarGroupContent>
         </SidebarGroup>
 
@@ -86,7 +91,7 @@ export function AppSidebar({ isAdmin }: { isAdmin: boolean }) {
           <SidebarGroupLabel>Sistema</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {settingsItems.filter((i) => !i.adminOnly || isAdmin).map((item) => (
+              {settingsItems.filter((i) => (!i.adminOnly || perms.isAdmin || isAdmin) && (perms.loading || perms.canView(i.module))).map((item) => (
                 <SidebarMenuItem key={item.url}>
                   <SidebarMenuButton asChild isActive={path.startsWith(item.url)}>
                     <Link to={item.url} onClick={closeOnMobile}>

@@ -30,7 +30,7 @@ function UsersPage() {
   const createUserFn = useServerFn(adminCreateUser);
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [form, setForm] = useState({ full_name: "", email: "", password: "", role: "user" as "user" | "admin" });
+  const [form, setForm] = useState({ full_name: "", email: "", password: "", role: "member" as "member" | "admin" });
 
   const { data: users = [] } = useQuery({
     queryKey: ["users"],
