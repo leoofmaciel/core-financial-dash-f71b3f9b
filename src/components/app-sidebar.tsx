@@ -39,9 +39,11 @@ export function AppSidebar({ isAdmin }: { isAdmin: boolean }) {
   const path = useRouterState({ select: (r) => r.location.pathname });
   const navigate = useNavigate();
   const company = useCompanySettings();
+  const perms = useMyPermissions();
   const logoSrc = company?.logo_url || logo;
 
   const closeOnMobile = () => { if (isMobile) setOpenMobile(false); };
+
 
   const logout = async () => {
     await supabase.auth.signOut();
