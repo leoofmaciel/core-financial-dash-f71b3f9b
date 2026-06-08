@@ -78,7 +78,7 @@ function OrderEditor() {
     if (!order.client_id) { toast.error("Selecione um cliente"); return null; }
 
     let orderId = isNew ? null : (id as string);
-    const payload = {
+    const payload: any = {
       user_id: user.id,
       client_id: order.client_id,
       status: order.status,
@@ -87,6 +87,7 @@ function OrderEditor() {
       payment_terms: order.payment_terms || null,
       notes: order.notes || null,
     };
+    if (order.created_at) payload.created_at = order.created_at;
     if (isNew) {
       const { data, error } = await supabase.from("orders").insert(payload).select().single();
       if (error) { toast.error(error.message); return null; }
@@ -103,6 +104,12 @@ function OrderEditor() {
       unit_price: Number(i.unit_price), total: Number(i.total), position: idx,
     }));
     if (rows.length) await supabase.from("order_items").insert(rows);
+
+    // Cascade order date to related transactions
+    if (!isNew && order.created_at) {
+      const orderDate = String(order.created_at).slice(0, 10);
+      await supabase.from("transactions").update({ transaction_date: orderDate }).eq("order_id", orderId!);
+    }
 
     await logActivity(isNew ? "create" : "update", "order", orderId!, { total });
     if (!silent) toast.success("Pedido salvo");
