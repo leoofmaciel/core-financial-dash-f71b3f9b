@@ -40,6 +40,7 @@ function OrderEditor() {
   const [materials, setMaterials] = useState<Material[]>([]);
   const [clients, setClients] = useState<any[]>([]);
   const [budgetId, setBudgetId] = useState<string | null>(null);
+  const [editingDate, setEditingDate] = useState(false);
 
   useEffect(() => {
     (async () => {
