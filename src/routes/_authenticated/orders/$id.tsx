@@ -78,7 +78,7 @@ function OrderEditor() {
     if (!order.client_id) { toast.error("Selecione um cliente"); return null; }
 
     let orderId = isNew ? null : (id as string);
-    const payload = {
+    const payload: any = {
       user_id: user.id,
       client_id: order.client_id,
       status: order.status,
@@ -87,6 +87,7 @@ function OrderEditor() {
       payment_terms: order.payment_terms || null,
       notes: order.notes || null,
     };
+    if (order.created_at) payload.created_at = order.created_at;
     if (isNew) {
       const { data, error } = await supabase.from("orders").insert(payload).select().single();
       if (error) { toast.error(error.message); return null; }
@@ -103,6 +104,12 @@ function OrderEditor() {
       unit_price: Number(i.unit_price), total: Number(i.total), position: idx,
     }));
     if (rows.length) await supabase.from("order_items").insert(rows);
+
+    // Cascade order date to related transactions
+    if (!isNew && order.created_at) {
+      const orderDate = String(order.created_at).slice(0, 10);
+      await supabase.from("transactions").update({ transaction_date: orderDate }).eq("order_id", orderId!);
+    }
 
     await logActivity(isNew ? "create" : "update", "order", orderId!, { total });
     if (!silent) toast.success("Pedido salvo");
@@ -395,6 +402,21 @@ function OrderEditor() {
       <Card>
         <CardHeader><CardTitle>Informações adicionais</CardTitle></CardHeader>
         <CardContent className="grid gap-4 sm:grid-cols-2">
+          <div className="space-y-2">
+            <Label>Data do pedido</Label>
+            <Input
+              type="date"
+              value={order.created_at ? String(order.created_at).slice(0, 10) : ""}
+              onChange={(e) => {
+                const d = e.target.value;
+                if (!d) return;
+                // preserve time portion if present
+                const time = order.created_at ? String(order.created_at).slice(10) : "T00:00:00.000Z";
+                setOrder({ ...order, created_at: `${d}${time}` });
+              }}
+            />
+            <p className="text-xs text-muted-foreground">Ao salvar, as contas a pagar/receber vinculadas terão a data atualizada.</p>
+          </div>
           <div className="space-y-2"><Label>Prazo de entrega</Label><Input value={order.delivery_time || ""} onChange={(e) => setOrder({ ...order, delivery_time: e.target.value })} placeholder="Ex: 15 dias úteis" /></div>
           <div className="space-y-2"><Label>Forma de pagamento</Label><Input value={order.payment_terms || ""} onChange={(e) => setOrder({ ...order, payment_terms: e.target.value })} placeholder="Ex: 50% entrada + 50% entrega" /></div>
           <div className="space-y-2 sm:col-span-2"><Label>Observações</Label><Textarea rows={3} value={order.notes || ""} onChange={(e) => setOrder({ ...order, notes: e.target.value })} /></div>
