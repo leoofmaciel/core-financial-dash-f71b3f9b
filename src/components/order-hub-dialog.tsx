@@ -142,7 +142,7 @@ export function OrderHubDialog({
     if (!user) return null;
     if (!order.client_id) { if (!silent) toast.error("Selecione um cliente"); return null; }
     setSaving(true);
-    const payload = {
+    const payload: any = {
       user_id: user.id,
       client_id: order.client_id,
       status: order.status,
@@ -151,7 +151,9 @@ export function OrderHubDialog({
       payment_terms: order.payment_terms || null,
       notes: order.notes || null,
     };
+    if (order.created_at) payload.created_at = order.created_at;
     let id = currentId;
+    let createdAtChanged = false;
     if (!id) {
       const { data, error } = await supabase.from("orders").insert(payload).select().single();
       if (error) { setSaving(false); if (!silent) toast.error(error.message); return null; }
@@ -159,8 +161,18 @@ export function OrderHubDialog({
       setCurrentId(id);
       setOrder(data);
     } else {
+      // detect if date changed by fetching current
+      const { data: prev } = await supabase.from("orders").select("created_at").eq("id", id).single();
+      if (prev && order.created_at && String(prev.created_at).slice(0, 10) !== String(order.created_at).slice(0, 10)) {
+        createdAtChanged = true;
+      }
       const { error } = await supabase.from("orders").update(payload).eq("id", id);
       if (error) { setSaving(false); if (!silent) toast.error(error.message); return null; }
+      if (createdAtChanged) {
+        await supabase.from("transactions").update({ transaction_date: String(order.created_at).slice(0, 10) }).eq("order_id", id);
+        qc.invalidateQueries({ queryKey: ["transactions"] });
+        qc.invalidateQueries({ queryKey: ["order-tx", id] });
+      }
     }
     await supabase.from("order_items").delete().eq("order_id", id!);
     const rows = items.filter((i) => i.description).map((i, idx) => ({
