@@ -13,7 +13,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import {
   Plus, Trash2, FileText, CheckCircle2, Save, X, UserPlus, Loader2,
-  CircleCheck, Receipt, History as HistoryIcon, Send,
+  CircleCheck, Receipt, History as HistoryIcon, Send, CalendarDays,
 } from "lucide-react";
 import { formatBRL, formatDate } from "@/lib/format";
 import { toast } from "sonner";
