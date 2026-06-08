@@ -402,6 +402,21 @@ function OrderEditor() {
       <Card>
         <CardHeader><CardTitle>Informações adicionais</CardTitle></CardHeader>
         <CardContent className="grid gap-4 sm:grid-cols-2">
+          <div className="space-y-2">
+            <Label>Data do pedido</Label>
+            <Input
+              type="date"
+              value={order.created_at ? String(order.created_at).slice(0, 10) : ""}
+              onChange={(e) => {
+                const d = e.target.value;
+                if (!d) return;
+                // preserve time portion if present
+                const time = order.created_at ? String(order.created_at).slice(10) : "T00:00:00.000Z";
+                setOrder({ ...order, created_at: `${d}${time}` });
+              }}
+            />
+            <p className="text-xs text-muted-foreground">Ao salvar, as contas a pagar/receber vinculadas terão a data atualizada.</p>
+          </div>
           <div className="space-y-2"><Label>Prazo de entrega</Label><Input value={order.delivery_time || ""} onChange={(e) => setOrder({ ...order, delivery_time: e.target.value })} placeholder="Ex: 15 dias úteis" /></div>
           <div className="space-y-2"><Label>Forma de pagamento</Label><Input value={order.payment_terms || ""} onChange={(e) => setOrder({ ...order, payment_terms: e.target.value })} placeholder="Ex: 50% entrada + 50% entrega" /></div>
           <div className="space-y-2 sm:col-span-2"><Label>Observações</Label><Textarea rows={3} value={order.notes || ""} onChange={(e) => setOrder({ ...order, notes: e.target.value })} /></div>
