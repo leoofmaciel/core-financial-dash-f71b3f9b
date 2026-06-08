@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Trash2, FileDown, Save, CheckCircle2, ArrowDownCircle, FileText, MessageCircle } from "lucide-react";
+import { Plus, Trash2, FileDown, Save, CheckCircle2, ArrowDownCircle, FileText, MessageCircle, Pencil, Check, X } from "lucide-react";
 import { formatBRL, formatDate } from "@/lib/format";
 import { toast } from "sonner";
 import { generateBudgetPDF } from "@/lib/pdf";
