@@ -355,8 +355,6 @@ export function OrderHubDialog({
                 />
               </div>
               <div>
-                <div className="flex items-center justify-between mb-2"></div>
-              <div>
                 <div className="flex items-center justify-between mb-2">
                   <h3 className="text-xs font-semibold uppercase text-muted-foreground">Itens</h3>
                   <Button size="sm" variant="outline" onClick={addItem}><Plus className="h-3.5 w-3.5 mr-1" /> Adicionar</Button>
