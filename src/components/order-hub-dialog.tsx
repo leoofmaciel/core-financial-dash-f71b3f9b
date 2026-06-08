@@ -13,7 +13,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import {
   Plus, Trash2, FileText, CheckCircle2, Save, X, UserPlus, Loader2,
-  CircleCheck, Receipt, History as HistoryIcon, Send,
+  CircleCheck, Receipt, History as HistoryIcon, Send, CalendarDays,
 } from "lucide-react";
 import { formatBRL, formatDate } from "@/lib/format";
 import { toast } from "sonner";
@@ -142,7 +142,7 @@ export function OrderHubDialog({
     if (!user) return null;
     if (!order.client_id) { if (!silent) toast.error("Selecione um cliente"); return null; }
     setSaving(true);
-    const payload = {
+    const payload: any = {
       user_id: user.id,
       client_id: order.client_id,
       status: order.status,
@@ -151,7 +151,9 @@ export function OrderHubDialog({
       payment_terms: order.payment_terms || null,
       notes: order.notes || null,
     };
+    if (order.created_at) payload.created_at = order.created_at;
     let id = currentId;
+    let createdAtChanged = false;
     if (!id) {
       const { data, error } = await supabase.from("orders").insert(payload).select().single();
       if (error) { setSaving(false); if (!silent) toast.error(error.message); return null; }
@@ -159,8 +161,18 @@ export function OrderHubDialog({
       setCurrentId(id);
       setOrder(data);
     } else {
+      // detect if date changed by fetching current
+      const { data: prev } = await supabase.from("orders").select("created_at").eq("id", id).single();
+      if (prev && order.created_at && String(prev.created_at).slice(0, 10) !== String(order.created_at).slice(0, 10)) {
+        createdAtChanged = true;
+      }
       const { error } = await supabase.from("orders").update(payload).eq("id", id);
       if (error) { setSaving(false); if (!silent) toast.error(error.message); return null; }
+      if (createdAtChanged) {
+        await supabase.from("transactions").update({ transaction_date: String(order.created_at).slice(0, 10) }).eq("order_id", id);
+        qc.invalidateQueries({ queryKey: ["transactions"] });
+        qc.invalidateQueries({ queryKey: ["order-tx", id] });
+      }
     }
     await supabase.from("order_items").delete().eq("order_id", id!);
     const rows = items.filter((i) => i.description).map((i, idx) => ({
@@ -324,6 +336,24 @@ export function OrderHubDialog({
 
             {/* Center: items + extras */}
             <div className="col-span-12 lg:col-span-6 overflow-y-auto p-4 sm:p-6 space-y-4">
+              <div className="rounded-md border-2 border-primary/30 bg-primary/5 p-3 flex items-center gap-3 flex-wrap">
+                <CalendarDays className="h-5 w-5 text-primary shrink-0" />
+                <div className="flex-1 min-w-[180px]">
+                  <Label className="text-xs font-semibold uppercase text-primary">Data do pedido</Label>
+                  <p className="text-[11px] text-muted-foreground">Alterar aqui atualiza as contas a pagar/receber vinculadas.</p>
+                </div>
+                <Input
+                  type="date"
+                  className="h-9 w-[170px] bg-background"
+                  value={order.created_at ? String(order.created_at).slice(0, 10) : ""}
+                  onChange={(e) => {
+                    const d = e.target.value;
+                    if (!d) return;
+                    const time = order.created_at ? String(order.created_at).slice(10) : "T00:00:00.000Z";
+                    setField({ created_at: `${d}${time}` });
+                  }}
+                />
+              </div>
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <h3 className="text-xs font-semibold uppercase text-muted-foreground">Itens</h3>
