@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Trash2, FileDown, Save, CheckCircle2, ArrowDownCircle, FileText, MessageCircle } from "lucide-react";
+import { Plus, Trash2, FileDown, Save, CheckCircle2, ArrowDownCircle, FileText, MessageCircle, Pencil, Check, X } from "lucide-react";
 import { formatBRL, formatDate } from "@/lib/format";
 import { toast } from "sonner";
 import { generateBudgetPDF } from "@/lib/pdf";
@@ -40,6 +40,7 @@ function OrderEditor() {
   const [materials, setMaterials] = useState<Material[]>([]);
   const [clients, setClients] = useState<any[]>([]);
   const [budgetId, setBudgetId] = useState<string | null>(null);
+  const [editingDate, setEditingDate] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -333,7 +334,39 @@ function OrderEditor() {
             </h1>
             {!isNew && <Badge variant={s.v}>{s.l}</Badge>}
           </div>
-          {!isNew && <p className="text-sm text-muted-foreground">Criado em {formatDate(order.created_at)}</p>}
+          {!isNew && (
+            <div className="flex items-center gap-2 mt-1">
+              {editingDate ? (
+                <>
+                  <Input
+                    type="date"
+                    className="h-8 w-[160px]"
+                    value={order.created_at ? String(order.created_at).slice(0, 10) : ""}
+                    onChange={(e) => {
+                      const d = e.target.value;
+                      if (!d) return;
+                      const time = order.created_at ? String(order.created_at).slice(10) : "T00:00:00.000Z";
+                      setOrder({ ...order, created_at: `${d}${time}` });
+                    }}
+                  />
+                  <Button size="icon" variant="ghost" className="h-8 w-8" onClick={async () => { await saveOrder(); setEditingDate(false); }}>
+                    <Check className="h-4 w-4" />
+                  </Button>
+                  <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => setEditingDate(false)}>
+                    <X className="h-4 w-4" />
+                  </Button>
+                  <span className="text-xs text-muted-foreground">Atualiza contas a pagar/receber vinculadas</span>
+                </>
+              ) : (
+                <>
+                  <p className="text-sm text-muted-foreground">Data do pedido: {formatDate(order.created_at)}</p>
+                  <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => setEditingDate(true)} title="Editar data do pedido">
+                    <Pencil className="h-3.5 w-3.5" />
+                  </Button>
+                </>
+              )}
+            </div>
+          )}
         </div>
         <div className="flex gap-2 flex-wrap">
           <Button variant="outline" onClick={() => saveOrder()}><Save className="h-4 w-4 mr-1" /> Salvar</Button>
