@@ -336,6 +336,26 @@ export function OrderHubDialog({
 
             {/* Center: items + extras */}
             <div className="col-span-12 lg:col-span-6 overflow-y-auto p-4 sm:p-6 space-y-4">
+              <div className="rounded-md border-2 border-primary/30 bg-primary/5 p-3 flex items-center gap-3 flex-wrap">
+                <CalendarDays className="h-5 w-5 text-primary shrink-0" />
+                <div className="flex-1 min-w-[180px]">
+                  <Label className="text-xs font-semibold uppercase text-primary">Data do pedido</Label>
+                  <p className="text-[11px] text-muted-foreground">Alterar aqui atualiza as contas a pagar/receber vinculadas.</p>
+                </div>
+                <Input
+                  type="date"
+                  className="h-9 w-[170px] bg-background"
+                  value={order.created_at ? String(order.created_at).slice(0, 10) : ""}
+                  onChange={(e) => {
+                    const d = e.target.value;
+                    if (!d) return;
+                    const time = order.created_at ? String(order.created_at).slice(10) : "T00:00:00.000Z";
+                    setField({ created_at: `${d}${time}` });
+                  }}
+                />
+              </div>
+              <div>
+                <div className="flex items-center justify-between mb-2"></div>
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <h3 className="text-xs font-semibold uppercase text-muted-foreground">Itens</h3>
