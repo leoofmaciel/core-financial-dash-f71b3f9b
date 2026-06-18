@@ -20,9 +20,19 @@ type ClientRow = {
   id: string; name: string; company: string | null; cnpj: string | null;
   email: string | null; phone: string | null; address: string | null;
   contact_name: string | null; notes: string | null;
+  cpf?: string | null; inscricao_municipal?: string | null; inscricao_estadual?: string | null;
+  endereco_logradouro?: string | null; endereco_numero?: string | null; endereco_complemento?: string | null;
+  endereco_bairro?: string | null; endereco_cep?: string | null; endereco_municipio?: string | null;
+  codigo_municipio_ibge?: string | null; endereco_uf?: string | null;
 };
 
-const empty = { name: "", company: "", cnpj: "", email: "", phone: "", address: "", contact_name: "", notes: "" };
+const empty = {
+  name: "", company: "", cnpj: "", email: "", phone: "", address: "", contact_name: "", notes: "",
+  cpf: "", inscricao_municipal: "", inscricao_estadual: "",
+  endereco_logradouro: "", endereco_numero: "", endereco_complemento: "",
+  endereco_bairro: "", endereco_cep: "", endereco_municipio: "",
+  codigo_municipio_ibge: "", endereco_uf: "",
+};
 
 function ClientsPage() {
   const qc = useQueryClient();
@@ -43,7 +53,15 @@ function ClientsPage() {
   const openNew = () => { setEditing(null); setForm(empty); setOpen(true); };
   const openEdit = (c: ClientRow) => {
     setEditing(c);
-    setForm({ name: c.name, company: c.company ?? "", cnpj: c.cnpj ?? "", email: c.email ?? "", phone: c.phone ?? "", address: c.address ?? "", contact_name: c.contact_name ?? "", notes: c.notes ?? "" });
+    setForm({
+      name: c.name, company: c.company ?? "", cnpj: c.cnpj ?? "", email: c.email ?? "",
+      phone: c.phone ?? "", address: c.address ?? "", contact_name: c.contact_name ?? "", notes: c.notes ?? "",
+      cpf: c.cpf ?? "", inscricao_municipal: c.inscricao_municipal ?? "", inscricao_estadual: c.inscricao_estadual ?? "",
+      endereco_logradouro: c.endereco_logradouro ?? "", endereco_numero: c.endereco_numero ?? "",
+      endereco_complemento: c.endereco_complemento ?? "", endereco_bairro: c.endereco_bairro ?? "",
+      endereco_cep: c.endereco_cep ?? "", endereco_municipio: c.endereco_municipio ?? "",
+      codigo_municipio_ibge: c.codigo_municipio_ibge ?? "", endereco_uf: c.endereco_uf ?? "",
+    });
     setOpen(true);
   };
 
@@ -88,17 +106,32 @@ function ClientsPage() {
         </div>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild><Button onClick={openNew}><Plus className="h-4 w-4 mr-1" /> Novo cliente</Button></DialogTrigger>
-          <DialogContent className="max-w-2xl">
+          <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
             <DialogHeader><DialogTitle>{editing ? "Editar cliente" : "Novo cliente"}</DialogTitle></DialogHeader>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="space-y-2 sm:col-span-2"><Label>Nome *</Label><Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} maxLength={120} /></div>
-              <div className="space-y-2"><Label>Empresa</Label><Input value={form.company} onChange={(e) => setForm({ ...form, company: e.target.value })} maxLength={120} /></div>
-              <div className="space-y-2"><Label>CNPJ / CPF</Label><Input value={form.cnpj} onChange={(e) => setForm({ ...form, cnpj: e.target.value })} maxLength={20} /></div>
-              <div className="space-y-2"><Label>Contato</Label><Input value={form.contact_name} onChange={(e) => setForm({ ...form, contact_name: e.target.value })} maxLength={120} /></div>
-              <div className="space-y-2"><Label>Telefone</Label><Input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} maxLength={30} /></div>
-              <div className="space-y-2 sm:col-span-2"><Label>E-mail</Label><Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} maxLength={150} /></div>
-              <div className="space-y-2 sm:col-span-2"><Label>Endereço</Label><Input value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} maxLength={200} /></div>
-              <div className="space-y-2 sm:col-span-2"><Label>Observações</Label><Textarea rows={3} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} maxLength={1000} /></div>
+            <div className="grid gap-4 sm:grid-cols-6">
+              <div className="space-y-2 sm:col-span-3"><Label>Nome *</Label><Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} maxLength={120} /></div>
+              <div className="space-y-2 sm:col-span-3"><Label>Empresa</Label><Input value={form.company} onChange={(e) => setForm({ ...form, company: e.target.value })} maxLength={120} /></div>
+              <div className="space-y-2 sm:col-span-2"><Label>CNPJ</Label><Input value={form.cnpj} onChange={(e) => setForm({ ...form, cnpj: e.target.value })} maxLength={20} /></div>
+              <div className="space-y-2 sm:col-span-2"><Label>CPF</Label><Input value={form.cpf} onChange={(e) => setForm({ ...form, cpf: e.target.value })} maxLength={20} /></div>
+              <div className="space-y-2 sm:col-span-2"><Label>Inscrição Municipal</Label><Input value={form.inscricao_municipal} onChange={(e) => setForm({ ...form, inscricao_municipal: e.target.value })} maxLength={20} /></div>
+              <div className="space-y-2 sm:col-span-3"><Label>Contato</Label><Input value={form.contact_name} onChange={(e) => setForm({ ...form, contact_name: e.target.value })} maxLength={120} /></div>
+              <div className="space-y-2 sm:col-span-3"><Label>Telefone</Label><Input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} maxLength={30} /></div>
+              <div className="space-y-2 sm:col-span-6"><Label>E-mail</Label><Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} maxLength={150} /></div>
+
+              <div className="sm:col-span-6 border-t pt-3">
+                <h4 className="text-sm font-semibold mb-2">Endereço (usado na NFS-e)</h4>
+              </div>
+              <div className="space-y-2 sm:col-span-4"><Label>Logradouro</Label><Input value={form.endereco_logradouro} onChange={(e) => setForm({ ...form, endereco_logradouro: e.target.value })} /></div>
+              <div className="space-y-2 sm:col-span-2"><Label>Número</Label><Input value={form.endereco_numero} onChange={(e) => setForm({ ...form, endereco_numero: e.target.value })} /></div>
+              <div className="space-y-2 sm:col-span-2"><Label>Complemento</Label><Input value={form.endereco_complemento} onChange={(e) => setForm({ ...form, endereco_complemento: e.target.value })} /></div>
+              <div className="space-y-2 sm:col-span-2"><Label>Bairro</Label><Input value={form.endereco_bairro} onChange={(e) => setForm({ ...form, endereco_bairro: e.target.value })} /></div>
+              <div className="space-y-2 sm:col-span-2"><Label>CEP</Label><Input value={form.endereco_cep} onChange={(e) => setForm({ ...form, endereco_cep: e.target.value })} placeholder="00000-000" /></div>
+              <div className="space-y-2 sm:col-span-3"><Label>Município</Label><Input value={form.endereco_municipio} onChange={(e) => setForm({ ...form, endereco_municipio: e.target.value })} /></div>
+              <div className="space-y-2 sm:col-span-2"><Label>Cód. IBGE</Label><Input value={form.codigo_municipio_ibge} onChange={(e) => setForm({ ...form, codigo_municipio_ibge: e.target.value })} placeholder="3550308" /></div>
+              <div className="space-y-2 sm:col-span-1"><Label>UF</Label><Input value={form.endereco_uf} onChange={(e) => setForm({ ...form, endereco_uf: e.target.value.toUpperCase() })} maxLength={2} /></div>
+              <div className="space-y-2 sm:col-span-6"><Label>Endereço (linha única — legado)</Label><Input value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} maxLength={200} /></div>
+
+              <div className="space-y-2 sm:col-span-6"><Label>Observações</Label><Textarea rows={3} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} maxLength={1000} /></div>
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => setOpen(false)}>Cancelar</Button>
