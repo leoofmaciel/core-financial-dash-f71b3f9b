@@ -214,11 +214,22 @@ export type Database = {
         Row: {
           address: string | null
           cnpj: string | null
+          codigo_municipio_ibge: string | null
           company: string | null
           contact_name: string | null
+          cpf: string | null
           created_at: string
           email: string | null
+          endereco_bairro: string | null
+          endereco_cep: string | null
+          endereco_complemento: string | null
+          endereco_logradouro: string | null
+          endereco_municipio: string | null
+          endereco_numero: string | null
+          endereco_uf: string | null
           id: string
+          inscricao_estadual: string | null
+          inscricao_municipal: string | null
           name: string
           notes: string | null
           phone: string | null
@@ -229,11 +240,22 @@ export type Database = {
         Insert: {
           address?: string | null
           cnpj?: string | null
+          codigo_municipio_ibge?: string | null
           company?: string | null
           contact_name?: string | null
+          cpf?: string | null
           created_at?: string
           email?: string | null
+          endereco_bairro?: string | null
+          endereco_cep?: string | null
+          endereco_complemento?: string | null
+          endereco_logradouro?: string | null
+          endereco_municipio?: string | null
+          endereco_numero?: string | null
+          endereco_uf?: string | null
           id?: string
+          inscricao_estadual?: string | null
+          inscricao_municipal?: string | null
           name: string
           notes?: string | null
           phone?: string | null
@@ -244,11 +266,22 @@ export type Database = {
         Update: {
           address?: string | null
           cnpj?: string | null
+          codigo_municipio_ibge?: string | null
           company?: string | null
           contact_name?: string | null
+          cpf?: string | null
           created_at?: string
           email?: string | null
+          endereco_bairro?: string | null
+          endereco_cep?: string | null
+          endereco_complemento?: string | null
+          endereco_logradouro?: string | null
+          endereco_municipio?: string | null
+          endereco_numero?: string | null
+          endereco_uf?: string | null
           id?: string
+          inscricao_estadual?: string | null
+          inscricao_municipal?: string | null
           name?: string
           notes?: string | null
           phone?: string | null
@@ -391,16 +424,30 @@ export type Database = {
         Row: {
           aliquota_iss: number | null
           cfop_padrao: string | null
+          cnae: string | null
           cnpj_emissor: string | null
           codigo_municipio: string | null
           codigo_tributacao_municipio: string | null
           created_at: string
+          email: string | null
+          endereco_bairro: string | null
+          endereco_cep: string | null
+          endereco_complemento: string | null
+          endereco_logradouro: string | null
+          endereco_municipio: string | null
+          endereco_numero: string | null
           id: string
+          incentivador_cultural: boolean | null
           inscricao_municipal: string | null
           iss_retido: boolean | null
+          item_lista_servico: string | null
           natureza_operacao: string | null
           ncm_padrao: string | null
+          optante_simples_nacional: boolean | null
           razao_social: string | null
+          regime_especial_tributacao: string | null
+          regime_tributario: string | null
+          telefone: string | null
           uf: string | null
           updated_at: string
           user_id: string
@@ -410,16 +457,30 @@ export type Database = {
         Insert: {
           aliquota_iss?: number | null
           cfop_padrao?: string | null
+          cnae?: string | null
           cnpj_emissor?: string | null
           codigo_municipio?: string | null
           codigo_tributacao_municipio?: string | null
           created_at?: string
+          email?: string | null
+          endereco_bairro?: string | null
+          endereco_cep?: string | null
+          endereco_complemento?: string | null
+          endereco_logradouro?: string | null
+          endereco_municipio?: string | null
+          endereco_numero?: string | null
           id?: string
+          incentivador_cultural?: boolean | null
           inscricao_municipal?: string | null
           iss_retido?: boolean | null
+          item_lista_servico?: string | null
           natureza_operacao?: string | null
           ncm_padrao?: string | null
+          optante_simples_nacional?: boolean | null
           razao_social?: string | null
+          regime_especial_tributacao?: string | null
+          regime_tributario?: string | null
+          telefone?: string | null
           uf?: string | null
           updated_at?: string
           user_id: string
@@ -429,16 +490,30 @@ export type Database = {
         Update: {
           aliquota_iss?: number | null
           cfop_padrao?: string | null
+          cnae?: string | null
           cnpj_emissor?: string | null
           codigo_municipio?: string | null
           codigo_tributacao_municipio?: string | null
           created_at?: string
+          email?: string | null
+          endereco_bairro?: string | null
+          endereco_cep?: string | null
+          endereco_complemento?: string | null
+          endereco_logradouro?: string | null
+          endereco_municipio?: string | null
+          endereco_numero?: string | null
           id?: string
+          incentivador_cultural?: boolean | null
           inscricao_municipal?: string | null
           iss_retido?: boolean | null
+          item_lista_servico?: string | null
           natureza_operacao?: string | null
           ncm_padrao?: string | null
+          optante_simples_nacional?: boolean | null
           razao_social?: string | null
+          regime_especial_tributacao?: string | null
+          regime_tributario?: string | null
+          telefone?: string | null
           uf?: string | null
           updated_at?: string
           user_id?: string
