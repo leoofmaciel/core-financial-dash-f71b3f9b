@@ -37,6 +37,7 @@ import { Route as AuthenticatedReportsFixosRouteImport } from './routes/_authent
 import { Route as AuthenticatedReportsFaturamentoRouteImport } from './routes/_authenticated/reports/faturamento'
 import { Route as AuthenticatedReportsConversaoRouteImport } from './routes/_authenticated/reports/conversao'
 import { Route as AuthenticatedReportsClientesRouteImport } from './routes/_authenticated/reports/clientes'
+import { Route as AuthenticatedReportsCaixaRouteImport } from './routes/_authenticated/reports/caixa'
 import { Route as AuthenticatedOrdersIdRouteImport } from './routes/_authenticated/orders/$id'
 import { Route as AuthenticatedFiscalNovaRouteImport } from './routes/_authenticated/fiscal/nova'
 import { Route as AuthenticatedFiscalConfiguracoesRouteImport } from './routes/_authenticated/fiscal/configuracoes'
@@ -194,6 +195,12 @@ const AuthenticatedReportsClientesRoute =
     path: '/reports/clientes',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedReportsCaixaRoute =
+  AuthenticatedReportsCaixaRouteImport.update({
+    id: '/reports/caixa',
+    path: '/reports/caixa',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedOrdersIdRoute = AuthenticatedOrdersIdRouteImport.update({
   id: '/orders/$id',
   path: '/orders/$id',
@@ -237,6 +244,7 @@ export interface FileRoutesByFullPath {
   '/fiscal/configuracoes': typeof AuthenticatedFiscalConfiguracoesRoute
   '/fiscal/nova': typeof AuthenticatedFiscalNovaRoute
   '/orders/$id': typeof AuthenticatedOrdersIdRoute
+  '/reports/caixa': typeof AuthenticatedReportsCaixaRoute
   '/reports/clientes': typeof AuthenticatedReportsClientesRoute
   '/reports/conversao': typeof AuthenticatedReportsConversaoRoute
   '/reports/faturamento': typeof AuthenticatedReportsFaturamentoRoute
@@ -270,6 +278,7 @@ export interface FileRoutesByTo {
   '/fiscal/configuracoes': typeof AuthenticatedFiscalConfiguracoesRoute
   '/fiscal/nova': typeof AuthenticatedFiscalNovaRoute
   '/orders/$id': typeof AuthenticatedOrdersIdRoute
+  '/reports/caixa': typeof AuthenticatedReportsCaixaRoute
   '/reports/clientes': typeof AuthenticatedReportsClientesRoute
   '/reports/conversao': typeof AuthenticatedReportsConversaoRoute
   '/reports/faturamento': typeof AuthenticatedReportsFaturamentoRoute
@@ -305,6 +314,7 @@ export interface FileRoutesById {
   '/_authenticated/fiscal/configuracoes': typeof AuthenticatedFiscalConfiguracoesRoute
   '/_authenticated/fiscal/nova': typeof AuthenticatedFiscalNovaRoute
   '/_authenticated/orders/$id': typeof AuthenticatedOrdersIdRoute
+  '/_authenticated/reports/caixa': typeof AuthenticatedReportsCaixaRoute
   '/_authenticated/reports/clientes': typeof AuthenticatedReportsClientesRoute
   '/_authenticated/reports/conversao': typeof AuthenticatedReportsConversaoRoute
   '/_authenticated/reports/faturamento': typeof AuthenticatedReportsFaturamentoRoute
@@ -340,6 +350,7 @@ export interface FileRouteTypes {
     | '/fiscal/configuracoes'
     | '/fiscal/nova'
     | '/orders/$id'
+    | '/reports/caixa'
     | '/reports/clientes'
     | '/reports/conversao'
     | '/reports/faturamento'
@@ -373,6 +384,7 @@ export interface FileRouteTypes {
     | '/fiscal/configuracoes'
     | '/fiscal/nova'
     | '/orders/$id'
+    | '/reports/caixa'
     | '/reports/clientes'
     | '/reports/conversao'
     | '/reports/faturamento'
@@ -407,6 +419,7 @@ export interface FileRouteTypes {
     | '/_authenticated/fiscal/configuracoes'
     | '/_authenticated/fiscal/nova'
     | '/_authenticated/orders/$id'
+    | '/_authenticated/reports/caixa'
     | '/_authenticated/reports/clientes'
     | '/_authenticated/reports/conversao'
     | '/_authenticated/reports/faturamento'
@@ -628,6 +641,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedReportsClientesRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/reports/caixa': {
+      id: '/_authenticated/reports/caixa'
+      path: '/reports/caixa'
+      fullPath: '/reports/caixa'
+      preLoaderRoute: typeof AuthenticatedReportsCaixaRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/orders/$id': {
       id: '/_authenticated/orders/$id'
       path: '/orders/$id'
@@ -675,6 +695,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedFiscalConfiguracoesRoute: typeof AuthenticatedFiscalConfiguracoesRoute
   AuthenticatedFiscalNovaRoute: typeof AuthenticatedFiscalNovaRoute
   AuthenticatedOrdersIdRoute: typeof AuthenticatedOrdersIdRoute
+  AuthenticatedReportsCaixaRoute: typeof AuthenticatedReportsCaixaRoute
   AuthenticatedReportsClientesRoute: typeof AuthenticatedReportsClientesRoute
   AuthenticatedReportsConversaoRoute: typeof AuthenticatedReportsConversaoRoute
   AuthenticatedReportsFaturamentoRoute: typeof AuthenticatedReportsFaturamentoRoute
@@ -703,6 +724,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedFiscalConfiguracoesRoute: AuthenticatedFiscalConfiguracoesRoute,
   AuthenticatedFiscalNovaRoute: AuthenticatedFiscalNovaRoute,
   AuthenticatedOrdersIdRoute: AuthenticatedOrdersIdRoute,
+  AuthenticatedReportsCaixaRoute: AuthenticatedReportsCaixaRoute,
   AuthenticatedReportsClientesRoute: AuthenticatedReportsClientesRoute,
   AuthenticatedReportsConversaoRoute: AuthenticatedReportsConversaoRoute,
   AuthenticatedReportsFaturamentoRoute: AuthenticatedReportsFaturamentoRoute,
@@ -732,13 +754,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

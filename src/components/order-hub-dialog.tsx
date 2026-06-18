@@ -123,6 +123,8 @@ export function OrderHubDialog({
 
   const markDirty = () => { if (!skipAutoSave.current) setDirty(true); };
 
+  const itemsEndRef = useRef<HTMLDivElement | null>(null);
+
   const updateItem = (idx: number, patch: Partial<Item>) => {
     setItems((arr) => arr.map((it, i) => {
       if (i !== idx) return it;
@@ -132,7 +134,15 @@ export function OrderHubDialog({
     }));
     markDirty();
   };
-  const addItem = () => { setItems([...items, { description: "", quantity: 1, unit_price: 0, total: 0 }]); markDirty(); };
+  const addItem = () => {
+    setItems((arr) => [...arr, { description: "", quantity: 1, unit_price: 0, total: 0 }]);
+    markDirty();
+    // garante que o novo item aparece na tela (especialmente no mobile)
+    setTimeout(() => {
+      itemsEndRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+      toast.success("Novo item adicionado abaixo");
+    }, 50);
+  };
   const removeItem = (idx: number) => { setItems(items.filter((_, i) => i !== idx)); markDirty(); };
 
   const setField = (patch: any) => { setOrder({ ...order, ...patch }); markDirty(); };
@@ -168,8 +178,11 @@ export function OrderHubDialog({
       }
       const { error } = await supabase.from("orders").update(payload).eq("id", id);
       if (error) { setSaving(false); if (!silent) toast.error(error.message); return null; }
-      if (createdAtChanged) {
-        await supabase.from("transactions").update({ transaction_date: String(order.created_at).slice(0, 10) }).eq("order_id", id);
+      // Sempre propaga total e (se mudou) data para a movimentação vinculada
+      const txPatch: any = { amount: total };
+      if (createdAtChanged) txPatch.transaction_date = String(order.created_at).slice(0, 10);
+      const { data: tx } = await supabase.from("transactions").update(txPatch).eq("order_id", id).select();
+      if (tx && tx.length) {
         qc.invalidateQueries({ queryKey: ["transactions"] });
         qc.invalidateQueries({ queryKey: ["order-tx", id] });
       }
@@ -355,24 +368,24 @@ export function OrderHubDialog({
                 />
               </div>
               <div>
-                <div className="flex items-center justify-between mb-2">
-                  <h3 className="text-xs font-semibold uppercase text-muted-foreground">Itens</h3>
-                  <Button size="sm" variant="outline" onClick={addItem}><Plus className="h-3.5 w-3.5 mr-1" /> Adicionar</Button>
+                <div className="flex items-center justify-between mb-2 sticky top-0 bg-background z-10 py-1">
+                  <h3 className="text-xs font-semibold uppercase text-muted-foreground">Itens ({items.length})</h3>
+                  <Button size="sm" onClick={addItem}><Plus className="h-3.5 w-3.5 mr-1" /> Adicionar item</Button>
                 </div>
                 <div className="space-y-2">
                   {items.map((it, idx) => (
                     <div key={idx} className="grid grid-cols-12 gap-2 items-end border rounded-md p-2 bg-card">
                       <div className="col-span-12 sm:col-span-6">
-                        <Label className="text-[10px] uppercase text-muted-foreground">Descrição</Label>
-                        <Input value={it.description} onChange={(e) => updateItem(idx, { description: e.target.value })} className="h-8" />
+                        <Label className="text-[10px] uppercase text-muted-foreground">Descrição #{idx + 1}</Label>
+                        <Input value={it.description} onChange={(e) => updateItem(idx, { description: e.target.value })} className="h-9" />
                       </div>
                       <div className="col-span-4 sm:col-span-2">
                         <Label className="text-[10px] uppercase text-muted-foreground">Qtd</Label>
-                        <Input type="number" step="0.01" value={it.quantity} onChange={(e) => updateItem(idx, { quantity: Number(e.target.value) })} className="h-8" />
+                        <Input type="number" step="0.01" value={it.quantity} onChange={(e) => updateItem(idx, { quantity: Number(e.target.value) })} className="h-9" />
                       </div>
                       <div className="col-span-4 sm:col-span-2">
                         <Label className="text-[10px] uppercase text-muted-foreground">Valor</Label>
-                        <Input type="number" step="0.01" value={it.unit_price} onChange={(e) => updateItem(idx, { unit_price: Number(e.target.value) })} className="h-8" />
+                        <Input type="number" step="0.01" value={it.unit_price} onChange={(e) => updateItem(idx, { unit_price: Number(e.target.value) })} className="h-9" />
                       </div>
                       <div className="col-span-3 sm:col-span-1 text-right text-sm font-semibold">{formatBRL(it.total)}</div>
                       <div className="col-span-1">
@@ -380,6 +393,10 @@ export function OrderHubDialog({
                       </div>
                     </div>
                   ))}
+                  <div ref={itemsEndRef} />
+                  <Button size="sm" variant="outline" className="w-full" onClick={addItem}>
+                    <Plus className="h-3.5 w-3.5 mr-1" /> Adicionar outro item
+                  </Button>
                 </div>
               </div>
 

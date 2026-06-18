@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { ArrowLeft, Save, Settings as SettingsIcon, Copy } from "lucide-react";
 
@@ -28,6 +29,20 @@ type Settings = {
   iss_retido: boolean;
   natureza_operacao: string;
   webhook_secret: string;
+  cnae: string;
+  item_lista_servico: string;
+  regime_tributario: string;
+  optante_simples_nacional: boolean;
+  incentivador_cultural: boolean;
+  regime_especial_tributacao: string;
+  endereco_logradouro: string;
+  endereco_numero: string;
+  endereco_complemento: string;
+  endereco_bairro: string;
+  endereco_cep: string;
+  endereco_municipio: string;
+  telefone: string;
+  email: string;
 };
 
 const empty: Settings = {
@@ -37,6 +52,14 @@ const empty: Settings = {
   codigo_tributacao_municipio: "14.01", aliquota_iss: 5,
   iss_retido: false, natureza_operacao: "Venda",
   webhook_secret: "",
+  cnae: "", item_lista_servico: "14.01",
+  regime_tributario: "simples_nacional",
+  optante_simples_nacional: true,
+  incentivador_cultural: false,
+  regime_especial_tributacao: "",
+  endereco_logradouro: "", endereco_numero: "", endereco_complemento: "",
+  endereco_bairro: "", endereco_cep: "", endereco_municipio: "",
+  telefone: "", email: "",
 };
 
 function FiscalSettingsPage() {
@@ -85,6 +108,14 @@ function FiscalSettingsPage() {
     ? `${window.location.origin}/api/public/notaas-webhook`
     : "/api/public/notaas-webhook";
 
+  const missing: string[] = [];
+  if (!form.cnpj_emissor) missing.push("CNPJ");
+  if (!form.razao_social) missing.push("Razão social");
+  if (!form.inscricao_municipal) missing.push("Inscrição municipal");
+  if (!form.cnae) missing.push("CNAE");
+  if (!form.item_lista_servico) missing.push("Item lista serviço");
+  if (!form.endereco_logradouro || !form.endereco_numero || !form.endereco_bairro || !form.endereco_cep) missing.push("Endereço completo");
+
   return (
     <div className="space-y-6 max-w-4xl">
       <div className="flex items-center gap-3">
@@ -94,65 +125,157 @@ function FiscalSettingsPage() {
             <SettingsIcon className="h-6 w-6 text-blue-600" /> Configurações Fiscais
           </h1>
           <p className="text-sm text-muted-foreground">
-            Dados padrão usados ao emitir NFe e NFS-e. O certificado A1 e os dados completos do emissor são cadastrados no painel da Notaas.
+            Dados padrão usados ao emitir NFe e NFS-e. O certificado A1 é cadastrado no painel da Notaas.
           </p>
         </div>
       </div>
 
+      {missing.length > 0 && (
+        <div className="rounded-md border-2 border-amber-400 bg-amber-50 p-3 text-sm text-amber-900">
+          <strong>Falta preencher:</strong> {missing.join(", ")}. Sem esses campos a emissão da NFS-e será rejeitada.
+        </div>
+      )}
+
       <Card>
         <CardHeader>
-          <CardTitle>Emissor</CardTitle>
-          <CardDescription>Identificação básica usada nas notas.</CardDescription>
+          <CardTitle>Emissor / Prestador</CardTitle>
+          <CardDescription>Identificação da sua empresa nas notas.</CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-1">
-            <Label>CNPJ do Emissor</Label>
+            <Label>CNPJ do Emissor *</Label>
             <Input value={form.cnpj_emissor} onChange={e => set("cnpj_emissor", e.target.value)} placeholder="00.000.000/0000-00" />
           </div>
           <div className="space-y-1">
-            <Label>Razão Social</Label>
+            <Label>Razão Social *</Label>
             <Input value={form.razao_social} onChange={e => set("razao_social", e.target.value)} />
           </div>
           <div className="space-y-1">
-            <Label>Inscrição Municipal</Label>
+            <Label>Inscrição Municipal *</Label>
             <Input value={form.inscricao_municipal} onChange={e => set("inscricao_municipal", e.target.value)} />
           </div>
           <div className="space-y-1">
-            <Label>UF</Label>
-            <Input value={form.uf} onChange={e => set("uf", e.target.value.toUpperCase())} maxLength={2} />
+            <Label>CNAE *</Label>
+            <Input value={form.cnae} onChange={e => set("cnae", e.target.value)} placeholder="Ex: 6201501" />
           </div>
           <div className="space-y-1">
-            <Label>Código do Município (IBGE)</Label>
-            <Input value={form.codigo_municipio} onChange={e => set("codigo_municipio", e.target.value)} placeholder="3550308 (São Paulo)" />
+            <Label>Telefone</Label>
+            <Input value={form.telefone} onChange={e => set("telefone", e.target.value)} placeholder="(11) 99999-9999" />
           </div>
           <div className="space-y-1">
-            <Label>Natureza da Operação</Label>
-            <Input value={form.natureza_operacao} onChange={e => set("natureza_operacao", e.target.value)} />
+            <Label>E-mail</Label>
+            <Input type="email" value={form.email} onChange={e => set("email", e.target.value)} />
           </div>
         </CardContent>
       </Card>
 
       <Card>
         <CardHeader>
-          <CardTitle>Padrões Tributários</CardTitle>
-          <CardDescription>Valores aplicados quando você não informar manualmente.</CardDescription>
+          <CardTitle>Endereço do Prestador</CardTitle>
+          <CardDescription>Endereço completo usado nas notas emitidas.</CardDescription>
+        </CardHeader>
+        <CardContent className="grid gap-4 sm:grid-cols-6">
+          <div className="space-y-1 sm:col-span-4">
+            <Label>Logradouro *</Label>
+            <Input value={form.endereco_logradouro} onChange={e => set("endereco_logradouro", e.target.value)} placeholder="Rua, Av..." />
+          </div>
+          <div className="space-y-1 sm:col-span-2">
+            <Label>Número *</Label>
+            <Input value={form.endereco_numero} onChange={e => set("endereco_numero", e.target.value)} />
+          </div>
+          <div className="space-y-1 sm:col-span-2">
+            <Label>Complemento</Label>
+            <Input value={form.endereco_complemento} onChange={e => set("endereco_complemento", e.target.value)} />
+          </div>
+          <div className="space-y-1 sm:col-span-2">
+            <Label>Bairro *</Label>
+            <Input value={form.endereco_bairro} onChange={e => set("endereco_bairro", e.target.value)} />
+          </div>
+          <div className="space-y-1 sm:col-span-2">
+            <Label>CEP *</Label>
+            <Input value={form.endereco_cep} onChange={e => set("endereco_cep", e.target.value)} placeholder="00000-000" />
+          </div>
+          <div className="space-y-1 sm:col-span-3">
+            <Label>Município</Label>
+            <Input value={form.endereco_municipio} onChange={e => set("endereco_municipio", e.target.value)} placeholder="São Paulo" />
+          </div>
+          <div className="space-y-1 sm:col-span-2">
+            <Label>Código IBGE Município *</Label>
+            <Input value={form.codigo_municipio} onChange={e => set("codigo_municipio", e.target.value)} placeholder="3550308" />
+          </div>
+          <div className="space-y-1 sm:col-span-1">
+            <Label>UF *</Label>
+            <Input value={form.uf} onChange={e => set("uf", e.target.value.toUpperCase())} maxLength={2} />
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Regime Tributário (NFS-e)</CardTitle>
+          <CardDescription>Como sua empresa é tributada — usado em toda nota emitida.</CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-1">
-            <Label>NCM padrão (NFe)</Label>
-            <Input value={form.ncm_padrao} onChange={e => set("ncm_padrao", e.target.value)} />
+            <Label>Regime Tributário</Label>
+            <Select value={form.regime_tributario} onValueChange={(v) => set("regime_tributario", v)}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="simples_nacional">Simples Nacional</SelectItem>
+                <SelectItem value="simples_excesso">Simples – Excesso de Sublimite</SelectItem>
+                <SelectItem value="lucro_presumido">Lucro Presumido</SelectItem>
+                <SelectItem value="lucro_real">Lucro Real</SelectItem>
+                <SelectItem value="mei">MEI</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
           <div className="space-y-1">
-            <Label>CFOP padrão (NFe)</Label>
-            <Input value={form.cfop_padrao} onChange={e => set("cfop_padrao", e.target.value)} />
+            <Label>Regime Especial Tributação</Label>
+            <Select value={form.regime_especial_tributacao || "nenhum"} onValueChange={(v) => set("regime_especial_tributacao", v === "nenhum" ? "" : v)}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="nenhum">Nenhum</SelectItem>
+                <SelectItem value="microempresa_municipal">Microempresa Municipal</SelectItem>
+                <SelectItem value="estimativa">Estimativa</SelectItem>
+                <SelectItem value="sociedade_profissionais">Sociedade de Profissionais</SelectItem>
+                <SelectItem value="cooperativa">Cooperativa</SelectItem>
+                <SelectItem value="mei">MEI</SelectItem>
+                <SelectItem value="me_epp">ME ou EPP</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex items-center gap-3">
+            <Switch checked={form.optante_simples_nacional} onCheckedChange={v => set("optante_simples_nacional", v)} />
+            <Label>Optante do Simples Nacional</Label>
+          </div>
+          <div className="flex items-center gap-3">
+            <Switch checked={form.incentivador_cultural} onCheckedChange={v => set("incentivador_cultural", v)} />
+            <Label>Incentivador Cultural</Label>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Padrões da NFS-e</CardTitle>
+          <CardDescription>Valores aplicados automaticamente nas notas de serviço.</CardDescription>
+        </CardHeader>
+        <CardContent className="grid gap-4 sm:grid-cols-2">
+          <div className="space-y-1">
+            <Label>Item Lista Serviço (LC 116) *</Label>
+            <Input value={form.item_lista_servico} onChange={e => set("item_lista_servico", e.target.value)} placeholder="Ex: 14.01" />
           </div>
           <div className="space-y-1">
-            <Label>Cód. Tributação Municipal (NFS-e)</Label>
-            <Input value={form.codigo_tributacao_municipio} onChange={e => set("codigo_tributacao_municipio", e.target.value)} />
+            <Label>Cód. Tributação Municipal</Label>
+            <Input value={form.codigo_tributacao_municipio} onChange={e => set("codigo_tributacao_municipio", e.target.value)} placeholder="Mesmo do item, se não houver outro" />
           </div>
           <div className="space-y-1">
             <Label>Alíquota ISS (%)</Label>
             <Input type="number" step="0.01" value={form.aliquota_iss} onChange={e => set("aliquota_iss", e.target.value)} />
+          </div>
+          <div className="space-y-1">
+            <Label>Natureza da Operação</Label>
+            <Input value={form.natureza_operacao} onChange={e => set("natureza_operacao", e.target.value)} />
           </div>
           <div className="flex items-center gap-3 sm:col-span-2">
             <Switch checked={form.iss_retido} onCheckedChange={v => set("iss_retido", v)} />
@@ -163,9 +286,26 @@ function FiscalSettingsPage() {
 
       <Card>
         <CardHeader>
+          <CardTitle>Padrões NFe (Produtos)</CardTitle>
+          <CardDescription>Usado apenas se você emitir NFe de mercadoria.</CardDescription>
+        </CardHeader>
+        <CardContent className="grid gap-4 sm:grid-cols-2">
+          <div className="space-y-1">
+            <Label>NCM padrão</Label>
+            <Input value={form.ncm_padrao} onChange={e => set("ncm_padrao", e.target.value)} />
+          </div>
+          <div className="space-y-1">
+            <Label>CFOP padrão</Label>
+            <Input value={form.cfop_padrao} onChange={e => set("cfop_padrao", e.target.value)} />
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
           <CardTitle>Webhook de Status</CardTitle>
           <CardDescription>
-            Configure esta URL no painel da Notaas (Configurações → Webhooks) para que o status das notas seja atualizado automaticamente.
+            Configure esta URL no painel da Notaas para receber atualizações de status automaticamente.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -190,8 +330,8 @@ function FiscalSettingsPage() {
         </CardContent>
       </Card>
 
-      <div className="flex justify-end gap-2">
-        <Button onClick={() => save.mutate()} disabled={save.isPending || isLoading}>
+      <div className="flex justify-end gap-2 sticky bottom-2">
+        <Button onClick={() => save.mutate()} disabled={save.isPending || isLoading} size="lg" className="shadow-lg">
           <Save className="h-4 w-4 mr-1" />
           {save.isPending ? "Salvando..." : "Salvar configurações"}
         </Button>
