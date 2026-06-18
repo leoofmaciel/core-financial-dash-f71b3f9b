@@ -8,6 +8,14 @@ export const Route = createFileRoute("/_authenticated/reports/")({
 
 const reportsList = [
   {
+    title: "Saldo em Caixa",
+    description: "Quanto você tem em caixa agora — entradas pagas menos saídas pagas.",
+    icon: DollarSign,
+    color: "text-emerald-700",
+    bg: "bg-emerald-100",
+    url: "/reports/caixa",
+  },
+  {
     title: "Faturamento vs Custos",
     description: "Análise do faturamento contra os custos de matéria-prima.",
     icon: TrendingUp,
