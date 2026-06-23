@@ -66,6 +66,10 @@ const empty: Settings = {
 function FiscalSettingsPage() {
   const qc = useQueryClient();
   const [form, setForm] = useState<Settings>(empty);
+  const [certFile, setCertFile] = useState<File | null>(null);
+  const [certPass, setCertPass] = useState("");
+  const [certUploading, setCertUploading] = useState(false);
+  const [certMeta, setCertMeta] = useState<{ path?: string | null; nome?: string | null; validade?: string | null; uploaded_at?: string | null; notaas_id?: string | null }>({});
 
   const { data, isLoading } = useQuery({
     queryKey: ["fiscal_settings"],
