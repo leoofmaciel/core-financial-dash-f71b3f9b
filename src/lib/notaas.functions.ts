@@ -91,6 +91,12 @@ export const callNotaas = createServerFn({ method: "POST" })
       return res;
     }
 
+    if (action === "BAIXAR_PDF") {
+      const { idNota } = payload;
+      const res = await notaasApi.consultarNFe(idNota);
+      return { pdf_url: res?.pdf_url || res?.data?.pdf_url };
+    }
+
     if (action === "UPLOAD_CERTIFICADO") {
       // payload: { path: string, senha: string, cnpj?: string }
       const { path, senha, cnpj } = payload;
