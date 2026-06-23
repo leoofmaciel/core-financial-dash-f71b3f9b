@@ -453,6 +453,17 @@ function OrderEditor() {
           <Button onClick={approveOrder} disabled={order.status === "aprovado"}>
             <CheckCircle2 className="h-4 w-4 mr-1" /> Aprovar pedido
           </Button>
+          <Button
+            onClick={emitNFSeFromOrder}
+            disabled={isNew || emitirNFSe.isPending}
+            className="bg-blue-600 hover:bg-blue-700 text-white"
+            title="Emite NFS-e usando configurações fiscais e certificado A1"
+          >
+            {emitirNFSe.isPending ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Receipt className="h-4 w-4 mr-1" />}
+            Emitir NFS-e
+          </Button>
+        </div>
+      </div>
         </div>
       </div>
 
