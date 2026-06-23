@@ -83,8 +83,54 @@ function FiscalSettingsPage() {
   });
 
   useEffect(() => {
-    if (data) setForm({ ...empty, ...(data as any) });
+    if (data) {
+      setForm({ ...empty, ...(data as any) });
+      const d: any = data;
+      setCertMeta({
+        path: d.certificado_path,
+        nome: d.certificado_nome,
+        validade: d.certificado_validade,
+        uploaded_at: d.certificado_uploaded_at,
+        notaas_id: d.certificado_notaas_id,
+      });
+    }
   }, [data]);
+
+  const uploadCert = async () => {
+    if (!certFile) return toast.error("Selecione o arquivo .pfx ou .p12");
+    if (!certPass) return toast.error("Informe a senha do certificado");
+    setCertUploading(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Não autenticado");
+      const ext = certFile.name.toLowerCase().endsWith(".p12") ? "p12" : "pfx";
+      const path = `${user.id}/certificado.${ext}`;
+      const up = await supabase.storage.from("certificates").upload(path, certFile, {
+        upsert: true, contentType: "application/x-pkcs12",
+      });
+      if (up.error) throw up.error;
+      // Save path + senha (RLS-protected) right away
+      await supabase.from("fiscal_settings").upsert({
+        user_id: user.id,
+        certificado_path: path,
+        certificado_nome: certFile.name,
+        certificado_senha: certPass,
+        certificado_uploaded_at: new Date().toISOString(),
+      } as any, { onConflict: "user_id" });
+      // Send to Notaas
+      const res: any = await callNotaas({ data: { action: "UPLOAD_CERTIFICADO", payload: { path, senha: certPass, cnpj: form.cnpj_emissor } } });
+      toast.success("Certificado enviado à Notaas com sucesso!");
+      setCertFile(null);
+      setCertPass("");
+      qc.invalidateQueries({ queryKey: ["fiscal_settings"] });
+      if (res?.notaas?.validade) setCertMeta((m) => ({ ...m, validade: res.notaas.validade }));
+    } catch (err: any) {
+      toast.error(err.message || "Falha ao enviar certificado");
+    } finally {
+      setCertUploading(false);
+    }
+  };
+
 
   const save = useMutation({
     mutationFn: async () => {
