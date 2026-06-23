@@ -41,4 +41,6 @@ export const notaasApi = {
     request(`/v1/nfe/${encodeURIComponent(id)}/cancelar`, { method: "POST", body: JSON.stringify({ justificativa }) }),
   cancelarNFSe: (id: string, justificativa: string) =>
     request(`/v1/nfse/${encodeURIComponent(id)}/cancelar`, { method: "POST", body: JSON.stringify({ justificativa }) }),
+  enviarCertificado: (payload: { arquivo_base64: string; senha: string; cnpj?: string }) =>
+    request("/v1/certificados", { method: "POST", body: JSON.stringify(payload) }),
 };

@@ -8,12 +8,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Trash2, FileDown, Save, CheckCircle2, ArrowDownCircle, FileText, MessageCircle, Pencil, Check, X } from "lucide-react";
+import { Plus, Trash2, FileDown, Save, CheckCircle2, ArrowDownCircle, FileText, MessageCircle, Pencil, Check, X, Receipt, Loader2 } from "lucide-react";
 import { formatBRL, formatDate } from "@/lib/format";
 import { toast } from "sonner";
 import { generateBudgetPDF } from "@/lib/pdf";
 import { logActivity } from "@/lib/logs";
 import { shortenUrl } from "@/lib/shortener";
+import { useFiscal } from "@/modules/fiscal/hooks/useFiscal";
 
 export const Route = createFileRoute("/_authenticated/orders/$id")({ component: OrderEditor });
 
@@ -320,6 +321,79 @@ function OrderEditor() {
     toast.success("Material salvo e conta a pagar criada");
   };
 
+  const { emitirNFSe } = useFiscal();
+  const emitNFSeFromOrder = async () => {
+    if (!selectedClient) return toast.error("Selecione um cliente");
+    if (!items.length || items.every(i => !i.description)) return toast.error("Adicione ao menos um item");
+    const orderId = await saveOrder(true);
+    if (!orderId) return;
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    const { data: s } = await supabase.from("fiscal_settings").select("*").eq("user_id", user.id).maybeSingle();
+    const cfg: any = s || {};
+    const faltando: string[] = [];
+    if (!cfg.cnpj_emissor) faltando.push("CNPJ emissor");
+    if (!cfg.inscricao_municipal) faltando.push("Inscrição municipal");
+    if (!cfg.cnae) faltando.push("CNAE");
+    if (!cfg.item_lista_servico) faltando.push("Item lista serviço");
+    if (!cfg.certificado_notaas_id) faltando.push("Certificado A1");
+    if (faltando.length) return toast.error(`Configurações fiscais incompletas: ${faltando.join(", ")}. Acesse /fiscal/configuracoes.`);
+    const c: any = selectedClient;
+    const tomadorEnd = {
+      logradouro: c.endereco_logradouro || c.address || "",
+      numero: c.endereco_numero || "S/N",
+      complemento: c.endereco_complemento || undefined,
+      bairro: c.endereco_bairro || "Centro",
+      codigo_municipio: c.codigo_municipio_ibge || cfg.codigo_municipio,
+      uf: c.endereco_uf || cfg.uf,
+      cep: (c.endereco_cep || "").replace(/\D/g, ""),
+    };
+    if (!tomadorEnd.cep || !tomadorEnd.logradouro) {
+      return toast.error("Cadastro do cliente sem endereço completo (CEP e logradouro). Edite o cliente.");
+    }
+    const discriminacao = items.filter(i => i.description)
+      .map(i => `${i.quantity}x ${i.description} - ${formatBRL(i.total)}`).join("\n");
+    const numeroRps = Number(cfg.proximo_numero_rps || 1);
+    emitirNFSe.mutate({
+      ambiente: cfg.ambiente || "homologacao",
+      rps: { numero: numeroRps, serie: cfg.serie_rps || "1", tipo: "1" },
+      prestador: {
+        cnpj: String(cfg.cnpj_emissor || "").replace(/\D/g, ""),
+        inscricao_municipal: String(cfg.inscricao_municipal || "").replace(/\D/g, ""),
+        codigo_municipio: cfg.codigo_municipio,
+      },
+      servico: {
+        codigo_tributacao_municipio: cfg.codigo_tributacao_municipio || cfg.item_lista_servico,
+        item_lista_servico: cfg.item_lista_servico,
+        codigo_cnae: String(cfg.cnae).replace(/\D/g, ""),
+        discriminacao: `Pedido #${String(order.number ?? "").padStart(5, "0")}\n${discriminacao}`,
+        codigo_municipio: tomadorEnd.codigo_municipio,
+        valor_servicos: Number(total),
+        iss_retido: !!cfg.iss_retido,
+        aliquota: Number(cfg.aliquota_iss || 0) / 100,
+        natureza_operacao: cfg.natureza_operacao || "Tributação no município",
+        regime_especial_tributacao: cfg.regime_especial_tributacao || undefined,
+        optante_simples_nacional: cfg.optante_simples_nacional ?? true,
+        incentivador_cultural: cfg.incentivador_cultural ?? false,
+      },
+      tomador: {
+        cpf_cnpj: String(c.cnpj || c.cpf || "").replace(/\D/g, ""),
+        razao_social: c.company || c.name,
+        email: c.email || undefined,
+        inscricao_municipal: c.inscricao_municipal || undefined,
+        endereco: tomadorEnd,
+      },
+      order_id: orderId,
+      client_id: c.id,
+    } as any, {
+      onSuccess: async (res: any) => {
+        await supabase.from("fiscal_settings").update({ proximo_numero_rps: numeroRps + 1 } as any).eq("user_id", user.id);
+        await supabase.from("fiscal_documents").update({ order_id: orderId, client_id: c.id }).eq("id", res?.document_id);
+        toast.success("NFS-e enviada! Acompanhe o status em /fiscal.");
+      },
+    });
+  };
+
   if (loading) return <div className="text-muted-foreground">Carregando...</div>;
 
   const s = statusBadge(order.status);
@@ -379,8 +453,19 @@ function OrderEditor() {
           <Button onClick={approveOrder} disabled={order.status === "aprovado"}>
             <CheckCircle2 className="h-4 w-4 mr-1" /> Aprovar pedido
           </Button>
+          <Button
+            onClick={emitNFSeFromOrder}
+            disabled={isNew || emitirNFSe.isPending}
+            className="bg-blue-600 hover:bg-blue-700 text-white"
+            title="Emite NFS-e usando configurações fiscais e certificado A1"
+          >
+            {emitirNFSe.isPending ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Receipt className="h-4 w-4 mr-1" />}
+            Emitir NFS-e
+          </Button>
         </div>
       </div>
+
+
 
       <Card>
         <CardHeader><CardTitle>Cliente</CardTitle></CardHeader>

@@ -7,7 +7,8 @@ type Action =
   | "EMITIR_NFSE"
   | "CONSULTAR_NOTA"
   | "CANCELAR_NOTA"
-  | "BAIXAR_PDF";
+  | "BAIXAR_PDF"
+  | "UPLOAD_CERTIFICADO";
 
 export const callNotaas = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -94,6 +95,25 @@ export const callNotaas = createServerFn({ method: "POST" })
       const { idNota } = payload;
       const res = await notaasApi.consultarNFe(idNota);
       return { pdf_url: res?.pdf_url || res?.data?.pdf_url };
+    }
+
+    if (action === "UPLOAD_CERTIFICADO") {
+      // payload: { path: string, senha: string, cnpj?: string }
+      const { path, senha, cnpj } = payload;
+      if (!path || !senha) throw new Error("path e senha do certificado são obrigatórios");
+      const dl = await supabase.storage.from("certificates").download(path);
+      if (dl.error || !dl.data) throw new Error(dl.error?.message || "Não foi possível ler o certificado");
+      const buf = new Uint8Array(await dl.data.arrayBuffer());
+      let bin = "";
+      for (let i = 0; i < buf.byteLength; i++) bin += String.fromCharCode(buf[i]);
+      const b64 = btoa(bin);
+      const res = await notaasApi.enviarCertificado({ arquivo_base64: b64, senha, cnpj });
+      await supabase.from("fiscal_settings").update({
+        certificado_notaas_id: res?.id || res?.data?.id || null,
+        certificado_validade: res?.validade || res?.data?.validade || null,
+        certificado_uploaded_at: new Date().toISOString(),
+      }).eq("user_id", userId);
+      return { ok: true, notaas: res };
     }
 
     throw new Error(`Ação desconhecida: ${action}`);

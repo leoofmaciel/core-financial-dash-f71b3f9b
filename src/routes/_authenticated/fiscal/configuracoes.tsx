@@ -10,7 +10,8 @@ import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { ArrowLeft, Save, Settings as SettingsIcon, Copy } from "lucide-react";
+import { ArrowLeft, Save, Settings as SettingsIcon, Copy, ShieldCheck, Upload, Loader2, CheckCircle2, AlertTriangle as AlertIcon } from "lucide-react";
+import { callNotaas } from "@/lib/notaas.functions";
 
 export const Route = createFileRoute("/_authenticated/fiscal/configuracoes")({
   component: FiscalSettingsPage,
@@ -65,6 +66,10 @@ const empty: Settings = {
 function FiscalSettingsPage() {
   const qc = useQueryClient();
   const [form, setForm] = useState<Settings>(empty);
+  const [certFile, setCertFile] = useState<File | null>(null);
+  const [certPass, setCertPass] = useState("");
+  const [certUploading, setCertUploading] = useState(false);
+  const [certMeta, setCertMeta] = useState<{ path?: string | null; nome?: string | null; validade?: string | null; uploaded_at?: string | null; notaas_id?: string | null }>({});
 
   const { data, isLoading } = useQuery({
     queryKey: ["fiscal_settings"],
@@ -78,8 +83,54 @@ function FiscalSettingsPage() {
   });
 
   useEffect(() => {
-    if (data) setForm({ ...empty, ...(data as any) });
+    if (data) {
+      setForm({ ...empty, ...(data as any) });
+      const d: any = data;
+      setCertMeta({
+        path: d.certificado_path,
+        nome: d.certificado_nome,
+        validade: d.certificado_validade,
+        uploaded_at: d.certificado_uploaded_at,
+        notaas_id: d.certificado_notaas_id,
+      });
+    }
   }, [data]);
+
+  const uploadCert = async () => {
+    if (!certFile) return toast.error("Selecione o arquivo .pfx ou .p12");
+    if (!certPass) return toast.error("Informe a senha do certificado");
+    setCertUploading(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Não autenticado");
+      const ext = certFile.name.toLowerCase().endsWith(".p12") ? "p12" : "pfx";
+      const path = `${user.id}/certificado.${ext}`;
+      const up = await supabase.storage.from("certificates").upload(path, certFile, {
+        upsert: true, contentType: "application/x-pkcs12",
+      });
+      if (up.error) throw up.error;
+      // Save path + senha (RLS-protected) right away
+      await supabase.from("fiscal_settings").upsert({
+        user_id: user.id,
+        certificado_path: path,
+        certificado_nome: certFile.name,
+        certificado_senha: certPass,
+        certificado_uploaded_at: new Date().toISOString(),
+      } as any, { onConflict: "user_id" });
+      // Send to Notaas
+      const res: any = await callNotaas({ data: { action: "UPLOAD_CERTIFICADO", payload: { path, senha: certPass, cnpj: form.cnpj_emissor } } });
+      toast.success("Certificado enviado à Notaas com sucesso!");
+      setCertFile(null);
+      setCertPass("");
+      qc.invalidateQueries({ queryKey: ["fiscal_settings"] });
+      if (res?.notaas?.validade) setCertMeta((m) => ({ ...m, validade: res.notaas.validade }));
+    } catch (err: any) {
+      toast.error(err.message || "Falha ao enviar certificado");
+    } finally {
+      setCertUploading(false);
+    }
+  };
+
 
   const save = useMutation({
     mutationFn: async () => {
@@ -115,6 +166,9 @@ function FiscalSettingsPage() {
   if (!form.cnae) missing.push("CNAE");
   if (!form.item_lista_servico) missing.push("Item lista serviço");
   if (!form.endereco_logradouro || !form.endereco_numero || !form.endereco_bairro || !form.endereco_cep) missing.push("Endereço completo");
+  if (!certMeta.notaas_id) missing.push("Certificado digital A1");
+
+  const certValido = certMeta.validade ? new Date(certMeta.validade) > new Date() : false;
 
   return (
     <div className="space-y-6 max-w-4xl">
@@ -125,7 +179,7 @@ function FiscalSettingsPage() {
             <SettingsIcon className="h-6 w-6 text-blue-600" /> Configurações Fiscais
           </h1>
           <p className="text-sm text-muted-foreground">
-            Dados padrão usados ao emitir NFe e NFS-e. O certificado A1 é cadastrado no painel da Notaas.
+            Tudo o que a Notaas precisa para emitir NFS-e no Simples Nacional: dados do emissor, endereço, regime e certificado A1.
           </p>
         </div>
       </div>
@@ -209,6 +263,85 @@ function FiscalSettingsPage() {
           </div>
         </CardContent>
       </Card>
+
+      <Card className={certMeta.notaas_id ? "border-green-300" : "border-2 border-amber-400"}>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <ShieldCheck className="h-5 w-5 text-blue-600" /> Certificado Digital A1 (.pfx / .p12)
+          </CardTitle>
+          <CardDescription>
+            Obrigatório para emissão. O arquivo é enviado à Notaas e ficará disponível para assinar suas notas automaticamente.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {certMeta.notaas_id ? (
+            <div className={`rounded-md p-3 text-sm flex items-start gap-2 ${certValido ? "bg-green-50 text-green-900 border border-green-300" : "bg-amber-50 text-amber-900 border border-amber-300"}`}>
+              {certValido ? <CheckCircle2 className="h-5 w-5 shrink-0 mt-0.5" /> : <AlertIcon className="h-5 w-5 shrink-0 mt-0.5" />}
+              <div className="flex-1">
+                <div className="font-semibold">{certMeta.nome || "Certificado enviado"}</div>
+                <div className="text-xs">
+                  {certMeta.validade ? <>Validade: <b>{new Date(certMeta.validade).toLocaleDateString("pt-BR")}</b>{!certValido && " (VENCIDO — substitua já)"}</> : "Validade não informada"}
+                </div>
+                <div className="text-xs opacity-70">ID Notaas: {certMeta.notaas_id}</div>
+              </div>
+            </div>
+          ) : (
+            <div className="rounded-md bg-amber-50 border border-amber-300 p-3 text-sm text-amber-900 flex items-start gap-2">
+              <AlertIcon className="h-5 w-5 shrink-0 mt-0.5" />
+              Nenhum certificado enviado. Faça upload do .pfx (A1) e informe a senha para começar a emitir.
+            </div>
+          )}
+
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="space-y-1">
+              <Label>Arquivo do certificado (.pfx ou .p12)</Label>
+              <Input type="file" accept=".pfx,.p12,application/x-pkcs12" onChange={(e) => setCertFile(e.target.files?.[0] ?? null)} />
+              {certFile && <p className="text-xs text-muted-foreground">Selecionado: {certFile.name}</p>}
+            </div>
+            <div className="space-y-1">
+              <Label>Senha do certificado</Label>
+              <Input type="password" value={certPass} onChange={(e) => setCertPass(e.target.value)} autoComplete="new-password" />
+            </div>
+          </div>
+          <div className="flex justify-end">
+            <Button type="button" onClick={uploadCert} disabled={certUploading || !certFile || !certPass}>
+              {certUploading ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Upload className="h-4 w-4 mr-1" />}
+              {certUploading ? "Enviando..." : (certMeta.notaas_id ? "Substituir certificado" : "Enviar certificado à Notaas")}
+            </Button>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            🔒 O arquivo fica armazenado em bucket privado restrito ao seu usuário. A senha é armazenada para reenvio automático em caso de troca de ambiente.
+          </p>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Ambiente e Numeração RPS</CardTitle>
+          <CardDescription>Configure homologação para testes, produção para emitir notas válidas.</CardDescription>
+        </CardHeader>
+        <CardContent className="grid gap-4 sm:grid-cols-3">
+          <div className="space-y-1">
+            <Label>Ambiente</Label>
+            <Select value={(form as any).ambiente || "homologacao"} onValueChange={(v) => setForm(p => ({ ...p, ambiente: v } as any))}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="homologacao">Homologação (testes)</SelectItem>
+                <SelectItem value="producao">Produção (notas válidas)</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1">
+            <Label>Série RPS</Label>
+            <Input value={(form as any).serie_rps || "1"} onChange={e => setForm(p => ({ ...p, serie_rps: e.target.value } as any))} />
+          </div>
+          <div className="space-y-1">
+            <Label>Próximo número RPS</Label>
+            <Input type="number" value={(form as any).proximo_numero_rps ?? 1} onChange={e => setForm(p => ({ ...p, proximo_numero_rps: Number(e.target.value) } as any))} />
+          </div>
+        </CardContent>
+      </Card>
+
 
       <Card>
         <CardHeader>

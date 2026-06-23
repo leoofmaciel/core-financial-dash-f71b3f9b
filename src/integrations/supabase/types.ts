@@ -423,6 +423,13 @@ export type Database = {
       fiscal_settings: {
         Row: {
           aliquota_iss: number | null
+          ambiente: string | null
+          certificado_nome: string | null
+          certificado_notaas_id: string | null
+          certificado_path: string | null
+          certificado_senha: string | null
+          certificado_uploaded_at: string | null
+          certificado_validade: string | null
           cfop_padrao: string | null
           cnae: string | null
           cnpj_emissor: string | null
@@ -444,9 +451,11 @@ export type Database = {
           natureza_operacao: string | null
           ncm_padrao: string | null
           optante_simples_nacional: boolean | null
+          proximo_numero_rps: number | null
           razao_social: string | null
           regime_especial_tributacao: string | null
           regime_tributario: string | null
+          serie_rps: string | null
           telefone: string | null
           uf: string | null
           updated_at: string
@@ -456,6 +465,13 @@ export type Database = {
         }
         Insert: {
           aliquota_iss?: number | null
+          ambiente?: string | null
+          certificado_nome?: string | null
+          certificado_notaas_id?: string | null
+          certificado_path?: string | null
+          certificado_senha?: string | null
+          certificado_uploaded_at?: string | null
+          certificado_validade?: string | null
           cfop_padrao?: string | null
           cnae?: string | null
           cnpj_emissor?: string | null
@@ -477,9 +493,11 @@ export type Database = {
           natureza_operacao?: string | null
           ncm_padrao?: string | null
           optante_simples_nacional?: boolean | null
+          proximo_numero_rps?: number | null
           razao_social?: string | null
           regime_especial_tributacao?: string | null
           regime_tributario?: string | null
+          serie_rps?: string | null
           telefone?: string | null
           uf?: string | null
           updated_at?: string
@@ -489,6 +507,13 @@ export type Database = {
         }
         Update: {
           aliquota_iss?: number | null
+          ambiente?: string | null
+          certificado_nome?: string | null
+          certificado_notaas_id?: string | null
+          certificado_path?: string | null
+          certificado_senha?: string | null
+          certificado_uploaded_at?: string | null
+          certificado_validade?: string | null
           cfop_padrao?: string | null
           cnae?: string | null
           cnpj_emissor?: string | null
@@ -510,9 +535,11 @@ export type Database = {
           natureza_operacao?: string | null
           ncm_padrao?: string | null
           optante_simples_nacional?: boolean | null
+          proximo_numero_rps?: number | null
           razao_social?: string | null
           regime_especial_tributacao?: string | null
           regime_tributario?: string | null
+          serie_rps?: string | null
           telefone?: string | null
           uf?: string | null
           updated_at?: string
