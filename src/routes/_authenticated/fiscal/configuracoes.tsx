@@ -10,7 +10,8 @@ import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { ArrowLeft, Save, Settings as SettingsIcon, Copy } from "lucide-react";
+import { ArrowLeft, Save, Settings as SettingsIcon, Copy, ShieldCheck, Upload, Loader2, CheckCircle2, AlertTriangle as AlertIcon } from "lucide-react";
+import { callNotaas } from "@/lib/notaas.functions";
 
 export const Route = createFileRoute("/_authenticated/fiscal/configuracoes")({
   component: FiscalSettingsPage,
