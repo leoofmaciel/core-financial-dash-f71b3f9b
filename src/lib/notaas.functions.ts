@@ -7,7 +7,8 @@ type Action =
   | "EMITIR_NFSE"
   | "CONSULTAR_NOTA"
   | "CANCELAR_NOTA"
-  | "BAIXAR_PDF";
+  | "BAIXAR_PDF"
+  | "UPLOAD_CERTIFICADO";
 
 export const callNotaas = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
