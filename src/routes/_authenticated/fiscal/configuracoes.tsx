@@ -264,6 +264,85 @@ function FiscalSettingsPage() {
         </CardContent>
       </Card>
 
+      <Card className={certMeta.notaas_id ? "border-green-300" : "border-2 border-amber-400"}>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <ShieldCheck className="h-5 w-5 text-blue-600" /> Certificado Digital A1 (.pfx / .p12)
+          </CardTitle>
+          <CardDescription>
+            Obrigatório para emissão. O arquivo é enviado à Notaas e ficará disponível para assinar suas notas automaticamente.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {certMeta.notaas_id ? (
+            <div className={`rounded-md p-3 text-sm flex items-start gap-2 ${certValido ? "bg-green-50 text-green-900 border border-green-300" : "bg-amber-50 text-amber-900 border border-amber-300"}`}>
+              {certValido ? <CheckCircle2 className="h-5 w-5 shrink-0 mt-0.5" /> : <AlertIcon className="h-5 w-5 shrink-0 mt-0.5" />}
+              <div className="flex-1">
+                <div className="font-semibold">{certMeta.nome || "Certificado enviado"}</div>
+                <div className="text-xs">
+                  {certMeta.validade ? <>Validade: <b>{new Date(certMeta.validade).toLocaleDateString("pt-BR")}</b>{!certValido && " (VENCIDO — substitua já)"}</> : "Validade não informada"}
+                </div>
+                <div className="text-xs opacity-70">ID Notaas: {certMeta.notaas_id}</div>
+              </div>
+            </div>
+          ) : (
+            <div className="rounded-md bg-amber-50 border border-amber-300 p-3 text-sm text-amber-900 flex items-start gap-2">
+              <AlertIcon className="h-5 w-5 shrink-0 mt-0.5" />
+              Nenhum certificado enviado. Faça upload do .pfx (A1) e informe a senha para começar a emitir.
+            </div>
+          )}
+
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="space-y-1">
+              <Label>Arquivo do certificado (.pfx ou .p12)</Label>
+              <Input type="file" accept=".pfx,.p12,application/x-pkcs12" onChange={(e) => setCertFile(e.target.files?.[0] ?? null)} />
+              {certFile && <p className="text-xs text-muted-foreground">Selecionado: {certFile.name}</p>}
+            </div>
+            <div className="space-y-1">
+              <Label>Senha do certificado</Label>
+              <Input type="password" value={certPass} onChange={(e) => setCertPass(e.target.value)} autoComplete="new-password" />
+            </div>
+          </div>
+          <div className="flex justify-end">
+            <Button type="button" onClick={uploadCert} disabled={certUploading || !certFile || !certPass}>
+              {certUploading ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Upload className="h-4 w-4 mr-1" />}
+              {certUploading ? "Enviando..." : (certMeta.notaas_id ? "Substituir certificado" : "Enviar certificado à Notaas")}
+            </Button>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            🔒 O arquivo fica armazenado em bucket privado restrito ao seu usuário. A senha é armazenada para reenvio automático em caso de troca de ambiente.
+          </p>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Ambiente e Numeração RPS</CardTitle>
+          <CardDescription>Configure homologação para testes, produção para emitir notas válidas.</CardDescription>
+        </CardHeader>
+        <CardContent className="grid gap-4 sm:grid-cols-3">
+          <div className="space-y-1">
+            <Label>Ambiente</Label>
+            <Select value={(form as any).ambiente || "homologacao"} onValueChange={(v) => setForm(p => ({ ...p, ambiente: v } as any))}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="homologacao">Homologação (testes)</SelectItem>
+                <SelectItem value="producao">Produção (notas válidas)</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1">
+            <Label>Série RPS</Label>
+            <Input value={(form as any).serie_rps || "1"} onChange={e => setForm(p => ({ ...p, serie_rps: e.target.value } as any))} />
+          </div>
+          <div className="space-y-1">
+            <Label>Próximo número RPS</Label>
+            <Input type="number" value={(form as any).proximo_numero_rps ?? 1} onChange={e => setForm(p => ({ ...p, proximo_numero_rps: Number(e.target.value) } as any))} />
+          </div>
+        </CardContent>
+      </Card>
+
+
       <Card>
         <CardHeader>
           <CardTitle>Regime Tributário (NFS-e)</CardTitle>
