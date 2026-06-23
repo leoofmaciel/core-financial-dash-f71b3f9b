@@ -166,6 +166,9 @@ function FiscalSettingsPage() {
   if (!form.cnae) missing.push("CNAE");
   if (!form.item_lista_servico) missing.push("Item lista serviço");
   if (!form.endereco_logradouro || !form.endereco_numero || !form.endereco_bairro || !form.endereco_cep) missing.push("Endereço completo");
+  if (!certMeta.notaas_id) missing.push("Certificado digital A1");
+
+  const certValido = certMeta.validade ? new Date(certMeta.validade) > new Date() : false;
 
   return (
     <div className="space-y-6 max-w-4xl">
@@ -176,7 +179,7 @@ function FiscalSettingsPage() {
             <SettingsIcon className="h-6 w-6 text-blue-600" /> Configurações Fiscais
           </h1>
           <p className="text-sm text-muted-foreground">
-            Dados padrão usados ao emitir NFe e NFS-e. O certificado A1 é cadastrado no painel da Notaas.
+            Tudo o que a Notaas precisa para emitir NFS-e no Simples Nacional: dados do emissor, endereço, regime e certificado A1.
           </p>
         </div>
       </div>
