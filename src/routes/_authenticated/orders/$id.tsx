@@ -464,8 +464,8 @@ function OrderEditor() {
           </Button>
         </div>
       </div>
-        </div>
-      </div>
+
+
 
       <Card>
         <CardHeader><CardTitle>Cliente</CardTitle></CardHeader>
